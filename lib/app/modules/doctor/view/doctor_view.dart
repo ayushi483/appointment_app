@@ -17,6 +17,7 @@ class _DoctorViewState extends State<DoctorView> {
 
   List<Map<String, dynamic>> _allDoctors = [];
   List<Map<String, dynamic>> _filteredDoctors = [];
+  List<Map<String, dynamic>> _specialityDoctors = [];
   List<Map<String, dynamic>> _specialities = [];
 
   bool _isLoading = true;
@@ -25,15 +26,13 @@ class _DoctorViewState extends State<DoctorView> {
   String _selectedSpecialityName = 'All';
   String _searchQuery = '';
 
-  // ── NEW: read optional speciality args passed from AppointmentView ────────
   int? _initialSpecialityId;
   String? _initialSpecialityName;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Only read args once on first mount
-    if (_initialSpecialityId == null) {
+    if (_allDoctors.isEmpty) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
         _initialSpecialityId = args['speciality_id'] as int?;
@@ -74,20 +73,18 @@ class _DoctorViewState extends State<DoctorView> {
       setState(() {
         _allDoctors = doctors;
         _specialities = specs;
-        _isLoading = false;
       });
 
-      // ── If we arrived from a speciality card, auto-select it ─────────────
       if (_initialSpecialityId != null) {
-        await _onSpecialityTap(
-          _initialSpecialityId!,
-          _initialSpecialityName ?? 'All',
-        );
-        // Clear so a manual refresh doesn't re-trigger
+        _applySpecialityFilter(_initialSpecialityId!, _initialSpecialityName ?? 'All');
         _initialSpecialityId = null;
         _initialSpecialityName = null;
       } else {
-        setState(() => _filteredDoctors = doctors);
+        setState(() {
+          _specialityDoctors = doctors;
+          _filteredDoctors = doctors;
+          _isLoading = false;
+        });
       }
     } else {
       setState(() {
@@ -97,98 +94,116 @@ class _DoctorViewState extends State<DoctorView> {
     }
   }
 
-  Future<void> _onSpecialityTap(int? specialityId, String name) async {
+  // FIX: All filtering is done locally from _allDoctors.
+  // No API call to /get_doctors_by_speciality (returns 404 due to
+  // missing res.speciality model on the server).
+  void _applySpecialityFilter(int? specialityId, String name) {
+    if (_selectedSpecialityId == specialityId) return;
+
+    final base = specialityId == null
+        ? _allDoctors
+        : _allDoctors
+        .where((d) => d['speciality_id'] == specialityId)
+        .toList();
+
     setState(() {
       _selectedSpecialityId = specialityId;
       _selectedSpecialityName = name;
-      _isLoading = true;
+      _specialityDoctors = base;
+      _filteredDoctors = _applySearch(base);
+      _isLoading = false;
+      _error = null;
     });
-
-    if (specialityId == null) {
-      setState(() {
-        _filteredDoctors = _applySearch(_allDoctors);
-        _isLoading = false;
-      });
-    } else {
-      final result = await _controller.fetchDoctorsBySpeciality(specialityId);
-      if (!mounted) return;
-      setState(() {
-        _filteredDoctors = result['success'] == true
-            ? _applySearch(result['doctors'] as List<Map<String, dynamic>>)
-            : [];
-        _isLoading = false;
-      });
-    }
   }
 
-  List<Map<String, dynamic>> _applySearch(
-      List<Map<String, dynamic>> doctors) {
-    if (_searchQuery.isEmpty) return doctors;
+  List<Map<String, dynamic>> _applySearch(List<Map<String, dynamic>> doctors) {
+    if (_searchQuery.isEmpty) return List.from(doctors);
+    final q = _searchQuery.toLowerCase();
     return doctors
         .where((d) =>
-    (d['name'] as String? ?? '')
-        .toLowerCase()
-        .contains(_searchQuery.toLowerCase()) ||
-        (d['speciality'] as String? ?? '')
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
+    (d['name'] as String? ?? '').toLowerCase().contains(q) ||
+        (d['speciality'] as String? ?? '').toLowerCase().contains(q))
         .toList();
   }
 
   void _onSearchChanged(String query) {
     setState(() {
       _searchQuery = query;
-      _filteredDoctors = _applySearch(
-        _selectedSpecialityId == null ? _allDoctors : _filteredDoctors,
-      );
+      // Always search on top of speciality-filtered base, not on already-searched list
+      _filteredDoctors = _applySearch(_specialityDoctors);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          // ── Sliver App Bar ──────────────────────────────────────────
           SliverAppBar(
             pinned: true,
             floating: false,
-            backgroundColor: Colors.white,
+            backgroundColor:
+            isDark ? const Color(0xFF1F2937) : Colors.white,
             elevation: 0,
-            title: const Text(
+            title: Text(
               'Doctors',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.black),
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black),
             ),
-            iconTheme: const IconThemeData(color: Colors.black),
+            iconTheme:
+            IconThemeData(color: isDark ? Colors.white : Colors.black),
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.black),
+                icon: Icon(Icons.refresh,
+                    color: isDark ? Colors.white : Colors.black),
                 onPressed: _loadAll,
               ),
             ],
-            // ── Search bar + speciality chips ────────────────────────
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(108),
               child: Container(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Search
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
                       child: TextField(
                         controller: _searchController,
                         onChanged: _onSearchChanged,
+                        style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87),
                         decoration: InputDecoration(
                           hintText: 'Search doctors...',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          prefixIcon:
-                          const Icon(Icons.search, color: Colors.grey),
+                          hintStyle: TextStyle(
+                              color: isDark
+                                  ? Colors.grey[500]
+                                  : Colors.grey),
+                          prefixIcon: Icon(Icons.search,
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                            icon: Icon(Icons.clear,
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                            },
+                          )
+                              : null,
                           filled: true,
-                          fillColor: const Color(0xFFF3F4F6),
+                          fillColor: isDark
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFF3F4F6),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -198,7 +213,6 @@ class _DoctorViewState extends State<DoctorView> {
                         ),
                       ),
                     ),
-                    // Speciality chips
                     SizedBox(
                       height: 44,
                       child: SingleChildScrollView(
@@ -207,9 +221,11 @@ class _DoctorViewState extends State<DoctorView> {
                         const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: [
-                            _specialtyChip(null, 'All'),
+                            _specialtyChip(isDark, null, 'All'),
                             ..._specialities.map((s) => _specialtyChip(
-                                s['id'] as int, s['name'] as String)),
+                                isDark,
+                                s['id'] as int,
+                                s['name'] as String)),
                           ],
                         ),
                       ),
@@ -221,12 +237,12 @@ class _DoctorViewState extends State<DoctorView> {
             ),
           ),
         ],
-        body: _buildBody(),
+        body: _buildBody(isDark),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(bool isDark) {
     if (_isLoading) {
       return const Center(
           child: CircularProgressIndicator(color: Color(0xFF2563EB)));
@@ -238,7 +254,15 @@ class _DoctorViewState extends State<DoctorView> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Colors.grey)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey),
+              ),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadAll,
@@ -262,58 +286,81 @@ class _DoctorViewState extends State<DoctorView> {
         itemCount:
         _filteredDoctors.isEmpty ? 2 : _filteredDoctors.length + 1,
         itemBuilder: (context, index) {
-          // Count row
           if (index == 0) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                '${_filteredDoctors.length} doctors found',
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                '${_filteredDoctors.length} doctor${_filteredDoctors.length == 1 ? '' : 's'} found',
+                style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey,
+                    fontSize: 13),
               ),
             );
           }
-          // Empty state
           if (_filteredDoctors.isEmpty && index == 1) {
-            return const SizedBox(
+            return SizedBox(
               height: 300,
               child: Center(
-                child: Text('No doctors found',
-                    style: TextStyle(color: Colors.grey, fontSize: 15)),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.person_search,
+                        size: 48,
+                        color: isDark
+                            ? Colors.grey[600]
+                            : Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No doctors found',
+                      style: TextStyle(
+                          color:
+                          isDark ? Colors.grey[400] : Colors.grey,
+                          fontSize: 15),
+                    ),
+                  ],
+                ),
               ),
             );
           }
-          // Doctor card
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _buildDoctorCard(_filteredDoctors[index - 1]),
+            child:
+            _buildDoctorCard(isDark, _filteredDoctors[index - 1]),
           );
         },
       ),
     );
   }
 
-  Widget _specialtyChip(int? id, String name) {
-    final isSelected =
-        _selectedSpecialityId == id && _selectedSpecialityName == name;
+  Widget _specialtyChip(bool isDark, int? id, String name) {
+    // FIX: Only compare id — name comparison caused chip highlight issues
+    final isSelected = _selectedSpecialityId == id;
     return GestureDetector(
-      onTap: () => _onSpecialityTap(id, name),
+      onTap: () => _applySpecialityFilter(id, name),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2563EB) : Colors.white,
+          color: isSelected
+              ? const Color(0xFF2563EB)
+              : (isDark ? const Color(0xFF374151) : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF2563EB)
-                : const Color(0xFFE5E7EB),
+                : (isDark
+                ? const Color(0xFF4B5563)
+                : const Color(0xFFE5E7EB)),
           ),
         ),
         child: Text(
           name,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.grey[300] : Colors.black87),
             fontWeight:
             isSelected ? FontWeight.w600 : FontWeight.normal,
             fontSize: 13,
@@ -323,7 +370,7 @@ class _DoctorViewState extends State<DoctorView> {
     );
   }
 
-  Widget _buildDoctorCard(Map<String, dynamic> doc) {
+  Widget _buildDoctorCard(bool isDark, Map<String, dynamic> doc) {
     final isAvailable = doc['available'] == true;
     final availableColor =
     isAvailable ? const Color(0xFF16A34A) : const Color(0xFFD97706);
@@ -332,19 +379,21 @@ class _DoctorViewState extends State<DoctorView> {
 
     Uint8List? imageBytes;
     try {
-      final imgStr =
-          doc['image_1024'] as String? ?? doc['image'] as String? ?? '';
+      final imgStr = (doc['image_1024'] as String?)?.isNotEmpty == true
+          ? doc['image_1024'] as String
+          : (doc['image'] as String? ?? '');
       if (imgStr.isNotEmpty) imageBytes = base64Decode(imgStr);
     } catch (_) {}
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05), blurRadius: 6)
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 6)
         ],
       ),
       child: Column(
@@ -360,7 +409,9 @@ class _DoctorViewState extends State<DoctorView> {
                     : Container(
                   width: 72,
                   height: 72,
-                  color: const Color(0xFFE0F2FE),
+                  color: isDark
+                      ? const Color(0xFF1E3A5F)
+                      : const Color(0xFFE0F2FE),
                   child: const Icon(Icons.person,
                       size: 40, color: Color(0xFF2563EB)),
                 ),
@@ -371,32 +422,52 @@ class _DoctorViewState extends State<DoctorView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(doc['name'] ?? '',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark
+                                ? Colors.white
+                                : Colors.black87)),
                     if ((doc['speciality'] ?? '').toString().isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(doc['speciality'],
                             style: const TextStyle(
-                                color: Color(0xFF2563EB), fontSize: 13)),
+                                color: Color(0xFF2563EB),
+                                fontSize: 13)),
                       ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 13, color: Colors.grey),
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13,
+                            color: isDark
+                                ? Colors.grey[400]
+                                : Colors.grey),
                         const SizedBox(width: 4),
                         Text('${doc['total_appointment'] ?? 0} appts',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
-                        const Text(' • ',
-                            style: TextStyle(color: Colors.grey)),
-                        const Icon(Icons.payments_outlined,
-                            size: 13, color: Colors.grey),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey)),
+                        Text(' • ',
+                            style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey)),
+                        Icon(Icons.payments_outlined,
+                            size: 13,
+                            color: isDark
+                                ? Colors.grey[400]
+                                : Colors.grey),
                         const SizedBox(width: 2),
                         Text('₹${doc['fees'] ?? 0}',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey)),
                       ],
                     ),
                   ],
@@ -412,7 +483,7 @@ class _DoctorViewState extends State<DoctorView> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: availableColor.withOpacity(0.1),
+                  color: availableColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(availableText,

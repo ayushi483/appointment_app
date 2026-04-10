@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/theme_notifier.dart';
+import '../../../core/session.dart'; // ← added
 
 class SettingsView extends StatefulWidget {
   final String name;
@@ -20,6 +21,17 @@ class _SettingsViewState extends State<SettingsView> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
 
+  // Always read from AppSession so name never shows 'User'
+  String get _displayName =>
+      AppSession.patientName?.isNotEmpty == true
+          ? AppSession.patientName!
+          : widget.name;
+
+  String get _displayEmail =>
+      AppSession.patientEmail?.isNotEmpty == true
+          ? AppSession.patientEmail!
+          : widget.email;
+
   @override
   void initState() {
     super.initState();
@@ -27,7 +39,7 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   String get _initials {
-    final parts = widget.name.trim().split(' ');
+    final parts = _displayName.trim().split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
@@ -38,17 +50,21 @@ class _SettingsViewState extends State<SettingsView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Log Out',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel',
+                style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
+              AppSession.clear(); // ← clear session on logout
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 AppRoutes.login,
@@ -57,7 +73,8 @@ class _SettingsViewState extends State<SettingsView> {
             },
             child: const Text(
               'Log Out',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: Colors.red, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -70,9 +87,11 @@ class _SettingsViewState extends State<SettingsView> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -92,17 +111,17 @@ class _SettingsViewState extends State<SettingsView> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Profile Card
             _buildCard(
               isDark: isDark,
               child: ListTile(
-                contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 4),
                 leading: CircleAvatar(
                   radius: 26,
                   backgroundColor: const Color(0xFF2563EB),
@@ -116,7 +135,7 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                 ),
                 title: Text(
-                  widget.name,
+                  _displayName, // ← uses AppSession
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -124,15 +143,17 @@ class _SettingsViewState extends State<SettingsView> {
                   ),
                 ),
                 subtitle: Text(
-                  widget.email,
+                  _displayEmail, // ← uses AppSession
                   style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey,
+                    color:
+                    isDark ? Colors.grey[400] : Colors.grey,
                     fontSize: 13,
                   ),
                 ),
                 trailing: Icon(
                   Icons.chevron_right,
-                  color: isDark ? Colors.grey[400] : Colors.grey,
+                  color:
+                  isDark ? Colors.grey[400] : Colors.grey,
                 ),
                 onTap: () => Navigator.pop(context),
               ),
@@ -174,7 +195,9 @@ class _SettingsViewState extends State<SettingsView> {
                     trailing: Text(
                       'English',
                       style: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey,
+                        color: isDark
+                            ? Colors.grey[400]
+                            : Colors.grey,
                         fontSize: 14,
                       ),
                     ),
@@ -254,7 +277,8 @@ class _SettingsViewState extends State<SettingsView> {
                   backgroundColor: isDark
                       ? const Color(0xFF3B1F1F)
                       : const Color(0xFFFFF1F1),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -281,15 +305,20 @@ class _SettingsViewState extends State<SettingsView> {
                   Text(
                     'Made with ',
                     style: TextStyle(
-                      color: isDark ? Colors.grey[500] : Colors.grey,
+                      color: isDark
+                          ? Colors.grey[500]
+                          : Colors.grey,
                       fontSize: 13,
                     ),
                   ),
-                  const Icon(Icons.favorite, color: Colors.red, size: 14),
+                  const Icon(Icons.favorite,
+                      color: Colors.red, size: 14),
                   Text(
                     ' for better healthcare',
                     style: TextStyle(
-                      color: isDark ? Colors.grey[500] : Colors.grey,
+                      color: isDark
+                          ? Colors.grey[500]
+                          : Colors.grey,
                       fontSize: 13,
                     ),
                   ),
@@ -312,7 +341,8 @@ class _SettingsViewState extends State<SettingsView> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+            color: Colors.black
+                .withOpacity(isDark ? 0.2 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -338,7 +368,9 @@ class _SettingsViewState extends State<SettingsView> {
     height: 1,
     indent: 56,
     endIndent: 0,
-    color: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+    color: isDark
+        ? const Color(0xFF374151)
+        : const Color(0xFFF3F4F6),
   );
 
   Widget _buildToggleTile({
@@ -349,18 +381,22 @@ class _SettingsViewState extends State<SettingsView> {
     required ValueChanged<bool> onChanged,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 16),
       leading: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+          color: isDark
+              ? const Color(0xFF374151)
+              : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
           size: 20,
-          color: isDark ? Colors.grey[300] : Colors.black54,
+          color:
+          isDark ? Colors.grey[300] : Colors.black54,
         ),
       ),
       title: Text(
@@ -386,18 +422,22 @@ class _SettingsViewState extends State<SettingsView> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 16),
       leading: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+          color: isDark
+              ? const Color(0xFF374151)
+              : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
           size: 20,
-          color: isDark ? Colors.grey[300] : Colors.black54,
+          color:
+          isDark ? Colors.grey[300] : Colors.black54,
         ),
       ),
       title: Text(

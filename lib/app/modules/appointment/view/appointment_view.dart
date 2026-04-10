@@ -19,6 +19,12 @@ class _AppointmentViewState extends State<AppointmentView> {
   final FocusNode _searchFocusNode = FocusNode();
   bool _showSearchResults = false;
 
+  // Always read from AppSession so name never falls back to 'User'
+  String get _displayName =>
+      AppSession.patientName?.isNotEmpty == true
+          ? AppSession.patientName!
+          : widget.patientName;
+
   @override
   void initState() {
     super.initState();
@@ -57,8 +63,12 @@ class _AppointmentViewState extends State<AppointmentView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      // ── DARK MODE: scaffold background
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       body: SafeArea(
         child: Column(
           children: [
@@ -67,6 +77,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── Top blue header (always blue, looks fine in dark too)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
@@ -84,7 +95,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                widget.patientName,
+                                _displayName,
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,
@@ -95,28 +106,40 @@ class _AppointmentViewState extends State<AppointmentView> {
                             ],
                           ),
                           const SizedBox(height: 16),
+                          // ── Search box: dark-aware
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark
+                                  ? const Color(0xFF1F2937)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: TextField(
                               controller: _searchController,
                               focusNode: _searchFocusNode,
                               keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white
+                                      : Colors.black87),
                               decoration: InputDecoration(
-                                // ── FIXED: matches your real APP0011 format ──
                                 hintText:
                                 'Search doctors, specialty or code e.g. APP0011',
-                                hintStyle:
-                                const TextStyle(color: Colors.grey),
-                                prefixIcon: const Icon(Icons.search,
-                                    color: Colors.grey),
+                                hintStyle: TextStyle(
+                                    color: isDark
+                                        ? Colors.grey[500]
+                                        : Colors.grey),
+                                prefixIcon: Icon(Icons.search,
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey),
                                 suffixIcon:
                                 _searchController.text.isNotEmpty
                                     ? IconButton(
-                                  icon: const Icon(Icons.clear,
-                                      color: Colors.grey),
+                                  icon: Icon(Icons.clear,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey),
                                   onPressed: _clearSearch,
                                 )
                                     : null,
@@ -128,7 +151,6 @@ class _AppointmentViewState extends State<AppointmentView> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // ── FIXED: correct format shown to user ──
                           const Text(
                             'Tip: Type APP0011 to search by appointment code',
                             style: TextStyle(
@@ -139,9 +161,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                     ),
                     if (_showSearchResults &&
                         _controller.searchQuery.isNotEmpty)
-                      _buildSearchResults()
+                      _buildSearchResults(isDark)
                     else
-                      _buildNormalContent(),
+                      _buildNormalContent(isDark),
                   ],
                 ),
               ),
@@ -149,22 +171,27 @@ class _AppointmentViewState extends State<AppointmentView> {
           ],
         ),
       ),
+      // ── DARK MODE: bottom nav
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
+        selectedItemColor: const Color(0xFF2563EB),
+        unselectedItemColor:
+        isDark ? Colors.grey[500] : Colors.grey,
         onTap: (i) {
           setState(() => _selectedIndex = i);
           if (i == 1) Navigator.pushNamed(context, AppRoutes.booking);
           if (i == 2) Navigator.pushNamed(context, AppRoutes.profile);
           if (i == 3) {
-            Navigator.pushNamed(context, AppRoutes.settings, arguments: {
-              'name': AppSession.patientName ?? widget.patientName,
-              'email': AppSession.patientEmail ?? '',
-            });
+            Navigator.pushNamed(context, AppRoutes.settings,
+                arguments: {
+                  'name': AppSession.patientName ?? _displayName,
+                  'email': AppSession.patientEmail ?? '',
+                });
           }
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF2563EB),
-        unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
@@ -187,7 +214,9 @@ class _AppointmentViewState extends State<AppointmentView> {
     );
   }
 
-  Widget _buildNormalContent() {
+  // ── Normal content ──────────────────────────────────────────────────────────
+
+  Widget _buildNormalContent(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -196,14 +225,16 @@ class _AppointmentViewState extends State<AppointmentView> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
-              padding:
-              const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+              padding: const EdgeInsets.symmetric(
+                  vertical: 20, horizontal: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                // ── DARK MODE: quick-actions card
+                color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.07),
+                      color: Colors.black
+                          .withOpacity(isDark ? 0.3 : 0.07),
                       blurRadius: 10,
                       offset: const Offset(0, 4)),
                 ],
@@ -211,13 +242,12 @@ class _AppointmentViewState extends State<AppointmentView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildQuickAction('📅', 'Book',
-                          () => Navigator.pushNamed(context, AppRoutes.booking)),
-                  _buildQuickAction(
-                      '🩺',
-                      'Doctors',
-                          () =>
-                          Navigator.pushNamed(context, AppRoutes.doctors)),
+                  _buildQuickAction(isDark, '📅', 'Book',
+                          () => Navigator.pushNamed(
+                          context, AppRoutes.booking)),
+                  _buildQuickAction(isDark, '🩺', 'Doctors',
+                          () => Navigator.pushNamed(
+                          context, AppRoutes.doctors)),
                 ],
               ),
             ),
@@ -229,9 +259,12 @@ class _AppointmentViewState extends State<AppointmentView> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Upcoming Appointment',
+              Text('Upcoming Appointment',
                   style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      // ── DARK MODE: section title
+                      color: isDark ? Colors.white : Colors.black87)),
               GestureDetector(
                 onTap: () => Navigator.pushNamed(
                     context, AppRoutes.viewAppointments),
@@ -246,28 +279,33 @@ class _AppointmentViewState extends State<AppointmentView> {
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildUpcomingAppointmentCard(),
+          child: _buildUpcomingAppointmentCard(isDark),
         ),
         const SizedBox(height: 24),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text('Specialties',
-              style:
-              TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87)),
         ),
         const SizedBox(height: 12),
-        SizedBox(height: 100, child: _buildSpecialitiesList()),
+        SizedBox(height: 100, child: _buildSpecialitiesList(isDark)),
         const SizedBox(height: 24),
       ],
     );
   }
 
-  Widget _buildSearchResults() {
+  // ── Search results ──────────────────────────────────────────────────────────
+
+  Widget _buildSearchResults(bool isDark) {
     if (_controller.isSearching) {
       return const Padding(
         padding: EdgeInsets.all(32),
         child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF2563EB))),
+            child:
+            CircularProgressIndicator(color: Color(0xFF2563EB))),
       );
     }
 
@@ -280,13 +318,13 @@ class _AppointmentViewState extends State<AppointmentView> {
               const Icon(Icons.search_off, size: 48, color: Colors.grey),
               const SizedBox(height: 16),
               Text(_controller.searchError!,
-                  style:
-                  const TextStyle(color: Colors.grey, fontSize: 14),
+                  style: const TextStyle(
+                      color: Colors.grey, fontSize: 14),
                   textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () =>
-                    _controller.searchDoctors(_searchController.text),
+                onPressed: () => _controller
+                    .searchDoctors(_searchController.text),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB)),
                 child: const Text('Retry'),
@@ -301,18 +339,21 @@ class _AppointmentViewState extends State<AppointmentView> {
     final hasAppointments = _controller.appointmentResults.isNotEmpty;
 
     if (!hasDoctors && !hasAppointments) {
-      return const Padding(
-        padding: EdgeInsets.all(32),
+      return Padding(
+        padding: const EdgeInsets.all(32),
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.search_off, size: 48, color: Colors.grey),
-              SizedBox(height: 16),
-              Text('No results found',
-                  style: TextStyle(color: Colors.grey, fontSize: 16)),
-              Text(
+              const Icon(Icons.search_off,
+                  size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text('No results found',
+                  style:
+                  TextStyle(color: Colors.grey, fontSize: 16)),
+              const Text(
                   'Try a different name, specialty or appointment code',
-                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  style:
+                  TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
         ),
@@ -331,8 +372,10 @@ class _AppointmentViewState extends State<AppointmentView> {
                 hasDoctors
                     ? 'Doctors (${_controller.doctorResults.length})'
                     : 'Appointments (${_controller.appointmentResults.length})',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87),
               ),
               TextButton(
                   onPressed: _clearSearch,
@@ -348,7 +391,7 @@ class _AppointmentViewState extends State<AppointmentView> {
             itemCount: _controller.appointmentResults.length,
             itemBuilder: (context, index) =>
                 _buildAppointmentResultCard(
-                    _controller.appointmentResults[index]),
+                    isDark, _controller.appointmentResults[index]),
           ),
         if (hasDoctors)
           ListView.builder(
@@ -356,8 +399,8 @@ class _AppointmentViewState extends State<AppointmentView> {
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _controller.doctorResults.length,
-            itemBuilder: (context, index) =>
-                _buildDoctorCard(_controller.doctorResults[index]),
+            itemBuilder: (context, index) => _buildDoctorCard(
+                isDark, _controller.doctorResults[index]),
           ),
         const SizedBox(height: 24),
       ],
@@ -366,7 +409,7 @@ class _AppointmentViewState extends State<AppointmentView> {
 
   // ── Appointment result card ─────────────────────────────────────────────────
 
-  Widget _buildAppointmentResultCard(AppointmentModel appt) {
+  Widget _buildAppointmentResultCard(bool isDark, AppointmentModel appt) {
     Color statusColor;
     IconData statusIcon;
     switch (appt.status) {
@@ -391,11 +434,13 @@ class _AppointmentViewState extends State<AppointmentView> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05), blurRadius: 8)
+              color:
+              Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 8)
         ],
       ),
       child: Padding(
@@ -410,7 +455,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: isDark
+                        ? const Color(0xFF1E3A5F)
+                        : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -419,13 +466,11 @@ class _AppointmentViewState extends State<AppointmentView> {
                       const Icon(Icons.confirmation_number_outlined,
                           size: 13, color: Color(0xFF2563EB)),
                       const SizedBox(width: 4),
-                      Text(
-                        appt.appointmentCode,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF2563EB),
-                            fontWeight: FontWeight.bold),
-                      ),
+                      Text(appt.appointmentCode,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF2563EB),
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -433,7 +478,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -458,7 +503,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
+                      color: isDark
+                          ? const Color(0xFF1E3A5F)
+                          : const Color(0xFFE0F2FE),
                       borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.person,
                       size: 26, color: Color(0xFF2563EB)),
@@ -469,12 +516,19 @@ class _AppointmentViewState extends State<AppointmentView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(appt.doctorName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
-                      Text(
-                          appt.doctorSpeciality ?? 'General Practice',
                           style: TextStyle(
-                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: isDark
+                                  ? Colors.white
+                                  : Colors.black87)),
+                      Text(
+                          appt.doctorSpeciality ??
+                              'General Practice',
+                          style: TextStyle(
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey.shade600,
                               fontSize: 12)),
                     ],
                   ),
@@ -486,7 +540,9 @@ class _AppointmentViewState extends State<AppointmentView> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(8)),
               child: Row(
                 children: [
@@ -510,7 +566,10 @@ class _AppointmentViewState extends State<AppointmentView> {
               const SizedBox(height: 8),
               Text(appt.notes,
                   style: TextStyle(
-                      color: Colors.grey.shade600, fontSize: 12),
+                      color: isDark
+                          ? Colors.grey[400]
+                          : Colors.grey.shade600,
+                      fontSize: 12),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis),
             ],
@@ -520,27 +579,32 @@ class _AppointmentViewState extends State<AppointmentView> {
     );
   }
 
-  Widget _buildDoctorCard(DoctorSearchModel doctor) {
+  // ── Doctor card ─────────────────────────────────────────────────────────────
+
+  Widget _buildDoctorCard(bool isDark, DoctorSearchModel doctor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05), blurRadius: 8)
+              color:
+              Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 8)
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () =>
-              Navigator.pushNamed(context, AppRoutes.booking, arguments: {
-                'doctor_id': doctor.id,
-                'doctor_name': doctor.name,
-                'doctor_speciality': doctor.speciality,
-                'doctor_fees': doctor.fees,
-              }),
+              Navigator.pushNamed(context, AppRoutes.booking,
+                  arguments: {
+                    'doctor_id': doctor.id,
+                    'doctor_name': doctor.name,
+                    'doctor_speciality': doctor.speciality,
+                    'doctor_fees': doctor.fees,
+                  }),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -550,7 +614,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
+                      color: isDark
+                          ? const Color(0xFF1E3A5F)
+                          : const Color(0xFFE0F2FE),
                       borderRadius: BorderRadius.circular(12)),
                   child: _buildDoctorImage(doctor),
                 ),
@@ -560,23 +626,33 @@ class _AppointmentViewState extends State<AppointmentView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(doctor.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16)),
+                              fontSize: 16,
+                              color: isDark
+                                  ? Colors.white
+                                  : Colors.black87)),
                       const SizedBox(height: 4),
                       Text(doctor.speciality ?? 'General Practice',
                           style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey.shade600,
                               fontSize: 13)),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.currency_rupee,
-                              size: 14, color: Colors.grey),
+                          Icon(Icons.currency_rupee,
+                              size: 14,
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey),
                           Text(
                               ' ${doctor.fees.toStringAsFixed(0)} consultation fee',
                               style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey.shade600,
                                   fontSize: 12)),
                         ],
                       ),
@@ -603,7 +679,8 @@ class _AppointmentViewState extends State<AppointmentView> {
   }
 
   Widget _buildDoctorImage(DoctorSearchModel doctor) {
-    if (doctor.imageBase64 != null && doctor.imageBase64!.isNotEmpty) {
+    if (doctor.imageBase64 != null &&
+        doctor.imageBase64!.isNotEmpty) {
       try {
         final bytes = base64Decode(doctor.imageBase64!);
         return ClipRRect(
@@ -617,12 +694,16 @@ class _AppointmentViewState extends State<AppointmentView> {
         );
       } catch (_) {}
     }
-    return const Icon(Icons.person, size: 32, color: Color(0xFF2563EB));
+    return const Icon(Icons.person,
+        size: 32, color: Color(0xFF2563EB));
   }
 
-  Widget _buildUpcomingAppointmentCard() {
+  // ── Upcoming appointment card ───────────────────────────────────────────────
+
+  Widget _buildUpcomingAppointmentCard(bool isDark) {
     if (_controller.loadingAppointment) {
       return _cardShell(
+          isDark: isDark,
           child: const Center(
               child: CircularProgressIndicator(
                   color: Color(0xFF2563EB), strokeWidth: 2)));
@@ -630,15 +711,20 @@ class _AppointmentViewState extends State<AppointmentView> {
 
     if (_controller.upcomingAppointment == null) {
       return _cardShell(
-          child: const Center(
+          isDark: isDark,
+          child: Center(
               child: Text('No upcoming appointments',
-                  style:
-                  TextStyle(color: Colors.grey, fontSize: 14))));
+                  style: TextStyle(
+                      color: isDark
+                          ? Colors.grey[400]
+                          : Colors.grey,
+                      fontSize: 14))));
     }
 
     final appt = _controller.upcomingAppointment!;
 
     return _cardShell(
+      isDark: isDark,
       child: Column(
         children: [
           Row(
@@ -648,7 +734,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                 child: Container(
                   width: 60,
                   height: 60,
-                  color: const Color(0xFFE0F2FE),
+                  color: isDark
+                      ? const Color(0xFF1E3A5F)
+                      : const Color(0xFFE0F2FE),
                   child: const Icon(Icons.person,
                       size: 36, color: Color(0xFF2563EB)),
                 ),
@@ -659,19 +747,30 @@ class _AppointmentViewState extends State<AppointmentView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(appt.doctorName,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark
+                                ? Colors.white
+                                : Colors.black87),
                         overflow: TextOverflow.ellipsis),
-                    Text(appt.doctorSpeciality ?? 'General Practice',
-                        style: const TextStyle(
-                            color: Colors.grey, fontSize: 13)),
+                    Text(
+                        appt.doctorSpeciality ??
+                            'General Practice',
+                        style: TextStyle(
+                            color: isDark
+                                ? Colors.grey[400]
+                                : Colors.grey,
+                            fontSize: 13)),
                     const SizedBox(height: 4),
                     if (appt.appointmentCode.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: isDark
+                              ? const Color(0xFF1E3A5F)
+                              : const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
@@ -682,13 +781,11 @@ class _AppointmentViewState extends State<AppointmentView> {
                                 size: 11,
                                 color: Color(0xFF2563EB)),
                             const SizedBox(width: 3),
-                            Text(
-                              appt.appointmentCode,
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF2563EB),
-                                  fontWeight: FontWeight.w600),
-                            ),
+                            Text(appt.appointmentCode,
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF2563EB),
+                                    fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -700,14 +797,16 @@ class _AppointmentViewState extends State<AppointmentView> {
                         const SizedBox(width: 3),
                         Text(appt.formattedDate,
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
+                                fontSize: 12,
+                                color: Colors.grey)),
                         const SizedBox(width: 8),
                         const Icon(Icons.access_time_outlined,
                             size: 12, color: Colors.grey),
                         const SizedBox(width: 3),
                         Text(appt.formattedTime,
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
+                                fontSize: 12,
+                                color: Colors.grey)),
                       ],
                     ),
                   ],
@@ -723,7 +822,9 @@ class _AppointmentViewState extends State<AppointmentView> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: isDark
+                    ? const Color(0xFF1E3A5F)
+                    : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Center(
@@ -739,22 +840,24 @@ class _AppointmentViewState extends State<AppointmentView> {
     );
   }
 
-  Widget _cardShell({required Widget child}) {
+  Widget _cardShell({required Widget child, required bool isDark}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05), blurRadius: 8)
+              color: Colors.black
+                  .withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 8)
         ],
       ),
       child: child,
     );
   }
 
-  Widget _buildSpecialitiesList() {
+  Widget _buildSpecialitiesList(bool isDark) {
     if (_controller.loadingSpecialities) {
       return const Center(
           child: CircularProgressIndicator(
@@ -778,9 +881,11 @@ class _AppointmentViewState extends State<AppointmentView> {
       );
     }
     if (_controller.specialities.isEmpty) {
-      return const Center(
+      return Center(
           child: Text('No specialities available',
-              style: TextStyle(color: Colors.grey, fontSize: 13)));
+              style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey,
+                  fontSize: 13)));
     }
     return ListView.builder(
       scrollDirection: Axis.horizontal,
@@ -795,14 +900,15 @@ class _AppointmentViewState extends State<AppointmentView> {
                 'speciality_id': speciality.id,
                 'speciality_name': speciality.name,
               }),
-          child: _SpecialityItem(speciality: speciality),
+          child: _SpecialityItem(
+              speciality: speciality, isDark: isDark),
         );
       },
     );
   }
 
   Widget _buildQuickAction(
-      String emoji, String label, VoidCallback onTap) {
+      bool isDark, String emoji, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -811,26 +917,33 @@ class _AppointmentViewState extends State<AppointmentView> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: isDark
+                  ? const Color(0xFF1E3A5F)
+                  : const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
-                child:
-                Text(emoji, style: const TextStyle(fontSize: 28))),
+                child: Text(emoji,
+                    style: const TextStyle(fontSize: 28))),
           ),
           const SizedBox(height: 8),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 12, color: Colors.black87)),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white70 : Colors.black87)),
         ],
       ),
     );
   }
 }
 
+// ── Speciality item ───────────────────────────────────────────────────────────
+
 class _SpecialityItem extends StatelessWidget {
   final SpecialityModel speciality;
-  const _SpecialityItem({required this.speciality});
+  final bool isDark;
+  const _SpecialityItem(
+      {required this.speciality, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -863,9 +976,13 @@ class _SpecialityItem extends StatelessWidget {
       margin: const EdgeInsets.only(right: 12),
       width: 84,
       decoration: BoxDecoration(
-        color: Colors.white,
+        // ── DARK MODE: speciality chip
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(
+            color: isDark
+                ? const Color(0xFF374151)
+                : const Color(0xFFE5E7EB)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -876,8 +993,10 @@ class _SpecialityItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               speciality.name,
-              style: const TextStyle(
-                  fontSize: 11, color: Colors.black87),
+              style: TextStyle(
+                  fontSize: 11,
+                  color:
+                  isDark ? Colors.white70 : Colors.black87),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,

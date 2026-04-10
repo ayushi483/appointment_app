@@ -34,8 +34,8 @@ class _BookingViewState extends State<BookingView> {
     '12:00 PM', '12:30 PM', '1:00 PM',
     '1:30 PM',  '02:00 PM', '02:30 PM',
     '03:00 PM', '03:30 PM', '04:00 PM',
-    '04:30 PM', '05:00 PM',  '06:00 PM',
-    '06:30 PM', '07:00 PM',  '07:30 PM',
+    '04:30 PM', '05:00 PM', '06:00 PM',
+    '06:30 PM', '07:00 PM', '07:30 PM',
   ];
 
   @override
@@ -102,15 +102,15 @@ class _BookingViewState extends State<BookingView> {
   }
 
   Future<void> _checkAndProceed() async {
-    if (_selectedDoctor == null || _selectedDate == null || _selectedTime == null) return;
+    if (_selectedDoctor == null ||
+        _selectedDate == null ||
+        _selectedTime == null) return;
 
     setState(() => _isCheckingAvailability = true);
 
-    final appointmentDatetime = _buildAppointmentDatetime();
-
     final result = await _controller.checkAvailability(
       doctorId: _selectedDoctor!['id'] as int,
-      appointmentDatetime: appointmentDatetime,
+      appointmentDatetime: _buildAppointmentDatetime(),
     );
 
     if (!mounted) return;
@@ -119,7 +119,6 @@ class _BookingViewState extends State<BookingView> {
     if (result['success'] == true) {
       final data = result['data'] as Map<String, dynamic>;
       final bool available = data['available'] == true;
-
       if (available) {
         setState(() => _currentStep = 3);
       } else {
@@ -144,15 +143,15 @@ class _BookingViewState extends State<BookingView> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: const [
             Icon(Icons.event_busy, color: Colors.red, size: 24),
             SizedBox(width: 8),
-            Text(
-              'Slot Unavailable',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-            ),
+            Text('Slot Unavailable',
+                style:
+                TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
           ],
         ),
         content: SingleChildScrollView(
@@ -169,23 +168,22 @@ class _BookingViewState extends State<BookingView> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Colors.red, size: 18),
+                    const Icon(Icons.info_outline,
+                        color: Colors.red, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        message,
-                        style: const TextStyle(color: Colors.red, fontSize: 13),
-                      ),
+                      child: Text(message,
+                          style: const TextStyle(
+                              color: Colors.red, fontSize: 13)),
                     ),
                   ],
                 ),
               ),
               if (schedule.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  'Doctor\'s Available Schedule:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
+                const Text('Doctor\'s Available Schedule:',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 10),
                 ...schedule.map((slot) {
                   final s = slot as Map<String, dynamic>;
@@ -196,7 +194,8 @@ class _BookingViewState extends State<BookingView> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                      border:
+                      Border.all(color: const Color(0xFFBFDBFE)),
                     ),
                     child: Row(
                       children: [
@@ -210,10 +209,9 @@ class _BookingViewState extends State<BookingView> {
                               Text(
                                 _capitalizeDay(s['day'] ?? ''),
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: Color(0xFF1E40AF),
-                                ),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    color: Color(0xFF1E40AF)),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -235,11 +233,10 @@ class _BookingViewState extends State<BookingView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Choose Another Slot',
-              style: TextStyle(
-                  color: Color(0xFF2563EB), fontWeight: FontWeight.w600),
-            ),
+            child: const Text('Choose Another Slot',
+                style: TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -251,9 +248,10 @@ class _BookingViewState extends State<BookingView> {
     return day[0].toUpperCase() + day.substring(1).toLowerCase();
   }
 
-  // ✅ FIXED: patientId is int not int?, check == 0 instead of == null
   Future<void> _confirmBooking() async {
-    if (_selectedDoctor == null || _selectedDate == null || _selectedTime == null) return;
+    if (_selectedDoctor == null ||
+        _selectedDate == null ||
+        _selectedTime == null) return;
 
     if (AppSession.patientId == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -267,12 +265,10 @@ class _BookingViewState extends State<BookingView> {
 
     setState(() => _isBooking = true);
 
-    final appointmentDatetime = _buildAppointmentDatetime();
-
     final result = await _controller.bookAppointment(
       doctorId: _selectedDoctor!['id'] as int,
-      patientId: AppSession.patientId, // ✅ no ! needed, it's int not int?
-      appointmentDatetime: appointmentDatetime,
+      patientId: AppSession.patientId,
+      appointmentDatetime: _buildAppointmentDatetime(),
       notes: _notesController.text.trim(),
     );
 
@@ -285,7 +281,8 @@ class _BookingViewState extends State<BookingView> {
         context,
         MaterialPageRoute(
           builder: (_) => _BookingConfirmedView(
-            doctor: d['doctor_name'] ?? _selectedDoctor!['name'],
+            doctor:
+            d['doctor_name'] ?? _selectedDoctor!['name'],
             date: _formatDate(_selectedDate!),
             time: _selectedTime!,
             appointmentCode: d['appointment_code'] ?? '',
@@ -312,13 +309,18 @@ class _BookingViewState extends State<BookingView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? Colors.white : Colors.black),
           onPressed: () {
             if (_currentStep > 1) {
               setState(() => _currentStep--);
@@ -327,16 +329,21 @@ class _BookingViewState extends State<BookingView> {
             }
           },
         ),
-        title: const Text(
+        title: Text(
           'Book Appointment',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1,
         type: BottomNavigationBarType.fixed,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
         selectedItemColor: const Color(0xFF2563EB),
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor:
+        isDark ? Colors.grey[500] : Colors.grey,
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined), label: 'Home'),
@@ -352,20 +359,11 @@ class _BookingViewState extends State<BookingView> {
             case 0:
               Navigator.pushReplacementNamed(context, AppRoutes.home);
               break;
-            case 1:
-              break;
             case 2:
               Navigator.pushReplacementNamed(context, AppRoutes.profile);
               break;
             case 3:
-              Navigator.pushNamed(
-                context,
-                AppRoutes.settings,
-                arguments: {
-                  'name': AppSession.patientName ?? 'User',
-                  'email': AppSession.patientEmail ?? '',
-                },
-              );
+              Navigator.pushNamed(context, AppRoutes.settings);
               break;
           }
         },
@@ -374,14 +372,14 @@ class _BookingViewState extends State<BookingView> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildStepIndicator(),
+            _buildStepIndicator(isDark),
             const SizedBox(height: 24),
             Expanded(
               child: _currentStep == 1
-                  ? _buildStep1()
+                  ? _buildStep1(isDark)
                   : _currentStep == 2
-                  ? _buildStep2()
-                  : _buildStep3(),
+                  ? _buildStep2(isDark)
+                  : _buildStep3(isDark),
             ),
           ],
         ),
@@ -389,7 +387,7 @@ class _BookingViewState extends State<BookingView> {
     );
   }
 
-  Widget _buildStepIndicator() {
+  Widget _buildStepIndicator(bool isDark) {
     return Row(
       children: [
         _stepCircle(1),
@@ -407,15 +405,15 @@ class _BookingViewState extends State<BookingView> {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF2563EB) : const Color(0xFFD1D5DB),
+        color: isActive
+            ? const Color(0xFF2563EB)
+            : const Color(0xFFD1D5DB),
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: Text(
-          '$step',
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        child: Text('$step',
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -424,16 +422,17 @@ class _BookingViewState extends State<BookingView> {
     return Expanded(
       child: Container(
         height: 3,
-        color: active ? const Color(0xFF2563EB) : const Color(0xFFD1D5DB),
+        color: active
+            ? const Color(0xFF2563EB)
+            : const Color(0xFFD1D5DB),
       ),
     );
   }
 
-  Widget _buildStep1() {
+  Widget _buildStep1(bool isDark) {
     if (_isLoadingDoctors) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF2563EB)),
-      );
+          child: CircularProgressIndicator(color: Color(0xFF2563EB)));
     }
 
     if (_doctorsError != null) {
@@ -441,14 +440,16 @@ class _BookingViewState extends State<BookingView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_doctorsError!, style: const TextStyle(color: Colors.grey)),
+            Text(_doctorsError!,
+                style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _loadDoctors,
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB)),
-              child:
-              const Text('Retry', style: TextStyle(color: Colors.white)),
+              child: const Text('Retry',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -458,15 +459,18 @@ class _BookingViewState extends State<BookingView> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Select Doctor',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Select Doctor',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87)),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -474,7 +478,9 @@ class _BookingViewState extends State<BookingView> {
               border: Border.all(
                 color: _selectedDoctor != null
                     ? const Color(0xFF2563EB)
-                    : const Color(0xFFE5E7EB),
+                    : (isDark
+                    ? const Color(0xFF4B5563)
+                    : const Color(0xFFE5E7EB)),
                 width: _selectedDoctor != null ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -482,16 +488,23 @@ class _BookingViewState extends State<BookingView> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<Map<String, dynamic>>(
                 isExpanded: true,
-                hint: const Text('Choose a doctor',
-                    style: TextStyle(color: Colors.grey)),
+                dropdownColor:
+                isDark ? const Color(0xFF1F2937) : Colors.white,
+                hint: Text('Choose a doctor',
+                    style: TextStyle(
+                        color: isDark
+                            ? Colors.grey[400]
+                            : Colors.grey)),
                 value: _selectedDoctor,
-                icon: const Icon(Icons.keyboard_arrow_down,
-                    color: Colors.grey),
+                icon: Icon(Icons.keyboard_arrow_down,
+                    color:
+                    isDark ? Colors.grey[400] : Colors.grey),
                 items: _doctors.map((doc) {
                   Uint8List? imageBytes;
                   try {
                     final imgStr = doc['image_1024'] as String? ?? '';
-                    if (imgStr.isNotEmpty) imageBytes = base64Decode(imgStr);
+                    if (imgStr.isNotEmpty)
+                      imageBytes = base64Decode(imgStr);
                   } catch (_) {}
 
                   return DropdownMenuItem<Map<String, dynamic>>(
@@ -502,32 +515,44 @@ class _BookingViewState extends State<BookingView> {
                           borderRadius: BorderRadius.circular(6),
                           child: imageBytes != null
                               ? Image.memory(imageBytes,
-                              width: 36, height: 36, fit: BoxFit.cover)
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover)
                               : Container(
                             width: 36,
                             height: 36,
-                            color: const Color(0xFFE0F2FE),
+                            color: isDark
+                                ? const Color(0xFF1E3A5F)
+                                : const Color(0xFFE0F2FE),
                             child: const Icon(Icons.person,
-                                size: 20, color: Color(0xFF2563EB)),
+                                size: 20,
+                                color: Color(0xFF2563EB)),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(doc['name'] ?? '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 14),
+                                      fontSize: 14,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87),
                                   overflow: TextOverflow.ellipsis),
                               if ((doc['speciality'] ?? '')
                                   .toString()
                                   .isNotEmpty)
                                 Text(doc['speciality'],
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 12),
+                                    style: TextStyle(
+                                        color: isDark
+                                            ? Colors.grey[400]
+                                            : Colors.grey,
+                                        fontSize: 12),
                                     overflow: TextOverflow.ellipsis),
                             ],
                           ),
@@ -566,7 +591,7 @@ class _BookingViewState extends State<BookingView> {
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep2(bool isDark) {
     final canContinue = _selectedDate != null &&
         _selectedTime != null &&
         !_isCheckingAvailability;
@@ -575,25 +600,32 @@ class _BookingViewState extends State<BookingView> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1F2937) : Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Select Date & Time',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Select Date & Time',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 20),
-            const Text('Date',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text('Date',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 1)),
+                  initialDate:
+                  DateTime.now().add(const Duration(days: 1)),
                   firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 60)),
+                  lastDate:
+                  DateTime.now().add(const Duration(days: 60)),
                   builder: (context, child) => Theme(
                     data: Theme.of(context).copyWith(
                       colorScheme: const ColorScheme.light(
@@ -602,16 +634,22 @@ class _BookingViewState extends State<BookingView> {
                     child: child!,
                   ),
                 );
-                if (picked != null) setState(() => _selectedDate = picked);
+                if (picked != null)
+                  setState(() => _selectedDate = picked);
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : Colors.white,
                   border: Border.all(
                     color: _selectedDate != null
                         ? const Color(0xFF2563EB)
-                        : const Color(0xFFD1D5DB),
+                        : (isDark
+                        ? const Color(0xFF4B5563)
+                        : const Color(0xFFD1D5DB)),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -624,23 +662,27 @@ class _BookingViewState extends State<BookingView> {
                           : 'dd/mm/yyyy',
                       style: TextStyle(
                           color: _selectedDate != null
-                              ? Colors.black
+                              ? (isDark ? Colors.white : Colors.black)
                               : Colors.grey),
                     ),
-                    const Icon(Icons.calendar_today_outlined,
-                        color: Colors.grey, size: 20),
+                    Icon(Icons.calendar_today_outlined,
+                        color: isDark ? Colors.grey[400] : Colors.grey,
+                        size: 20),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Time',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text('Time',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 8),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate:
+              const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 childAspectRatio: 2.4,
                 mainAxisSpacing: 8,
@@ -656,11 +698,15 @@ class _BookingViewState extends State<BookingView> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? const Color(0xFF2563EB)
-                          : Colors.white,
+                          : (isDark
+                          ? const Color(0xFF374151)
+                          : Colors.white),
                       border: Border.all(
                         color: isSelected
                             ? const Color(0xFF2563EB)
-                            : const Color(0xFFD1D5DB),
+                            : (isDark
+                            ? const Color(0xFF4B5563)
+                            : const Color(0xFFD1D5DB)),
                       ),
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -670,7 +716,11 @@ class _BookingViewState extends State<BookingView> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark
+                              ? Colors.grey[300]
+                              : Colors.black87),
                         ),
                       ),
                     ),
@@ -687,12 +737,20 @@ class _BookingViewState extends State<BookingView> {
                         ? null
                         : () => setState(() => _currentStep = 1),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF4B5563)
+                              : const Color(0xFFD1D5DB)),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Back',
-                        style: TextStyle(color: Colors.black87)),
+                    child: Text('Back',
+                        style: TextStyle(
+                            color: isDark
+                                ? Colors.grey[300]
+                                : Colors.black87)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -701,8 +759,10 @@ class _BookingViewState extends State<BookingView> {
                     onPressed: canContinue ? _checkAndProceed : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
-                      disabledBackgroundColor: const Color(0xFFD1D5DB),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      disabledBackgroundColor:
+                      const Color(0xFFD1D5DB),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
@@ -727,99 +787,72 @@ class _BookingViewState extends State<BookingView> {
     );
   }
 
-  Widget _buildStep3() {
+  Widget _buildStep3(bool isDark) {
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1F2937) : Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Your Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Your Details',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Confirm your details and describe your reason for visit',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey,
+                  fontSize: 13),
             ),
             const SizedBox(height: 20),
-            const Text('Full Name',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                border: Border.all(color: const Color(0xFFD1D5DB)),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.person_outline,
-                      color: Colors.grey, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(AppSession.patientName ?? 'Unknown',
-                        style: const TextStyle(
-                            fontSize: 15, color: Colors.black87)),
-                  ),
-                  const Icon(Icons.lock_outline,
-                      color: Color(0xFFD1D5DB), size: 16),
-                ],
-              ),
-            ),
+            _readOnlyField(isDark, 'Full Name', Icons.person_outline,
+                AppSession.patientName ?? 'Unknown'),
             const SizedBox(height: 16),
-            const Text('Phone',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                border: Border.all(color: const Color(0xFFD1D5DB)),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.phone_outlined,
-                      color: Colors.grey, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(AppSession.patientPhone ?? 'Unknown',
-                        style: const TextStyle(
-                            fontSize: 15, color: Colors.black87)),
-                  ),
-                  const Icon(Icons.lock_outline,
-                      color: Color(0xFFD1D5DB), size: 16),
-                ],
-              ),
-            ),
+            _readOnlyField(isDark, 'Phone', Icons.phone_outlined,
+                AppSession.patientPhone ?? 'Unknown'),
             const SizedBox(height: 16),
-            const Text('Reason (optional)',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text('Reason (optional)',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 8),
             TextField(
               controller: _notesController,
               maxLines: 4,
+              style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Brief description of your symptoms...',
-                hintStyle: const TextStyle(color: Colors.grey),
+                hintStyle: TextStyle(
+                    color: isDark ? Colors.grey[500] : Colors.grey),
+                filled: true,
+                fillColor: isDark
+                    ? const Color(0xFF374151)
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  borderSide: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF4B5563)
+                          : const Color(0xFFD1D5DB)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  borderSide: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF4B5563)
+                          : const Color(0xFFD1D5DB)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                  borderSide:
+                  const BorderSide(color: Color(0xFF2563EB)),
                 ),
               ),
             ),
@@ -832,12 +865,20 @@ class _BookingViewState extends State<BookingView> {
                         ? null
                         : () => setState(() => _currentStep = 2),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF4B5563)
+                              : const Color(0xFFD1D5DB)),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Back',
-                        style: TextStyle(color: Colors.black87)),
+                    child: Text('Back',
+                        style: TextStyle(
+                            color: isDark
+                                ? Colors.grey[300]
+                                : Colors.black87)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -846,8 +887,10 @@ class _BookingViewState extends State<BookingView> {
                     onPressed: _isBooking ? null : _confirmBooking,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
-                      disabledBackgroundColor: const Color(0xFFD1D5DB),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      disabledBackgroundColor:
+                      const Color(0xFFD1D5DB),
+                      padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
@@ -871,9 +914,57 @@ class _BookingViewState extends State<BookingView> {
       ),
     );
   }
+
+  Widget _readOnlyField(
+      bool isDark, String label, IconData icon, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87)),
+        const SizedBox(height: 8),
+        Container(
+          padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF374151)
+                : const Color(0xFFF9FAFB),
+            border: Border.all(
+                color: isDark
+                    ? const Color(0xFF4B5563)
+                    : const Color(0xFFD1D5DB)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(icon,
+                  color: isDark ? Colors.grey[400] : Colors.grey,
+                  size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(value,
+                    style: TextStyle(
+                        fontSize: 15,
+                        color:
+                        isDark ? Colors.white : Colors.black87)),
+              ),
+              Icon(Icons.lock_outline,
+                  color: isDark
+                      ? const Color(0xFF4B5563)
+                      : const Color(0xFFD1D5DB),
+                  size: 16),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-// ── Booking Confirmed Screen ───────────────────────────────────────────────
+// ── Booking Confirmed Screen ──────────────────────────────────────────────────
 class _BookingConfirmedView extends StatelessWidget {
   final String doctor;
   final String date;
@@ -889,15 +980,21 @@ class _BookingConfirmedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Booking Confirmed',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black),
         ),
       ),
       body: Padding(
@@ -906,11 +1003,13 @@ class _BookingConfirmedView extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1F2937) : Colors.white,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.05), blurRadius: 10),
+                  color: Colors.black
+                      .withOpacity(isDark ? 0.2 : 0.05),
+                  blurRadius: 10),
             ],
           ),
           child: Column(
@@ -927,33 +1026,38 @@ class _BookingConfirmedView extends StatelessWidget {
                     color: Color(0xFF16A34A), size: 44),
               ),
               const SizedBox(height: 16),
-              const Text('Booking Confirmed!',
+              Text('Booking Confirmed!',
                   style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold)),
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87)),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Your appointment has been booked successfully',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: [
                     if (appointmentCode.isNotEmpty) ...[
-                      _infoRow('Code:', appointmentCode),
+                      _infoRow(isDark, 'Code:', appointmentCode),
                       const SizedBox(height: 8),
                     ],
-                    _infoRow('Doctor:', doctor),
+                    _infoRow(isDark, 'Doctor:', doctor),
                     const SizedBox(height: 8),
-                    _infoRow('Date:', date),
+                    _infoRow(isDark, 'Date:', date),
                     const SizedBox(height: 8),
-                    _infoRow('Time:', time),
+                    _infoRow(isDark, 'Time:', time),
                   ],
                 ),
               ),
@@ -968,7 +1072,8 @@ class _BookingConfirmedView extends StatelessWidget {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding:
+                    const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
@@ -987,19 +1092,23 @@ class _BookingConfirmedView extends StatelessWidget {
                     context,
                     AppRoutes.home,
                         (r) => false,
-                    arguments: {
-                      'name': AppSession.patientName ?? 'User'
-                    },
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding:
+                    const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    side: BorderSide(
+                        color: isDark
+                            ? const Color(0xFF4B5563)
+                            : const Color(0xFFD1D5DB)),
                   ),
-                  child: const Text('Back to Home',
+                  child: Text('Back to Home',
                       style: TextStyle(
-                          color: Colors.black87, fontSize: 15)),
+                          color: isDark
+                              ? Colors.grey[300]
+                              : Colors.black87,
+                          fontSize: 15)),
                 ),
               ),
             ],
@@ -1009,17 +1118,21 @@ class _BookingConfirmedView extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRow(bool isDark, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(color: Colors.grey, fontSize: 14)),
+            style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey,
+                fontSize: 14)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87),
               textAlign: TextAlign.right),
         ),
       ],

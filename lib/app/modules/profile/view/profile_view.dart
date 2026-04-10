@@ -55,16 +55,20 @@ class _ProfileViewState extends State<ProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
         elevation: 0,
         leading: const SizedBox.shrink(),
-        title: const Text(
+        title: Text(
           'Profile',
           style: TextStyle(
-            color: Colors.black87,
+            color: isDark ? Colors.white : Colors.black87,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -79,7 +83,8 @@ class _ProfileViewState extends State<ProfileView> {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Color(0xFF2563EB)),
+                    strokeWidth: 2,
+                    color: Color(0xFF2563EB)),
               ),
             )
                 : TextButton.icon(
@@ -91,7 +96,9 @@ class _ProfileViewState extends State<ProfileView> {
                 }
               },
               icon: Icon(
-                _isEditing ? Icons.check : Icons.edit_outlined,
+                _isEditing
+                    ? Icons.check
+                    : Icons.edit_outlined,
                 size: 18,
                 color: const Color(0xFF2563EB),
               ),
@@ -108,48 +115,53 @@ class _ProfileViewState extends State<ProfileView> {
             TextButton(
               onPressed: () {
                 setState(() => _isEditing = false);
-                _controller.phoneController.text = _controller.phone;
+                _controller.phoneController.text =
+                    _controller.phone;
                 _controller.dobController.text =
                 _controller.dateOfBirth.isNotEmpty
                     ? _formatDob(_controller.dateOfBirth)
                     : '';
-                _controller.addressController.text = _controller.address;
+                _controller.addressController.text =
+                    _controller.address;
                 _controller.selectedGender = _controller.gender;
               },
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                style:
+                TextStyle(color: Colors.grey, fontSize: 14),
               ),
             ),
         ],
       ),
       body: _controller.isLoading
           ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+          child: CircularProgressIndicator(
+              color: Color(0xFF2563EB)))
           : _controller.errorMessage != null
-          ? _buildError()
-          : _buildBody(),
+          ? _buildError(isDark)
+          : _buildBody(isDark),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildStatsFooter(),
-          _buildBottomNav(),
+          _buildStatsFooter(isDark),
+          _buildBottomNav(isDark),
         ],
       ),
     );
   }
 
-  // ── Error State ────────────────────────────────────────────────────────────
-  Widget _buildError() {
+  Widget _buildError(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+          const Icon(Icons.error_outline,
+              color: Colors.redAccent, size: 48),
           const SizedBox(height: 12),
           Text(
             _controller.errorMessage!,
-            style: const TextStyle(color: Colors.grey),
+            style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -164,26 +176,26 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // ── Main Body ──────────────────────────────────────────────────────────────
-  Widget _buildBody() {
+  Widget _buildBody(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         children: [
-          _buildAvatar(),
+          _buildAvatar(isDark),
           const SizedBox(height: 24),
-
-          // ── Personal Information Card ──────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark
+                    ? const Color(0xFF1F2937)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black
+                        .withOpacity(isDark ? 0.2 : 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -194,63 +206,58 @@ class _ProfileViewState extends State<ProfileView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Personal Information',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: isDark
+                            ? Colors.white
+                            : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _buildReadOnlyField(
-                      label: 'Full Name',
-                      value: _controller.name,
-                      icon: Icons.person_outline,
-                    ),
+                        isDark: isDark,
+                        label: 'Full Name',
+                        value: _controller.name,
+                        icon: Icons.person_outline),
                     const SizedBox(height: 16),
-
                     _buildReadOnlyField(
-                      label: 'Email Address',
-                      value: _controller.email,
-                      icon: Icons.mail_outline,
-                    ),
+                        isDark: isDark,
+                        label: 'Email Address',
+                        value: _controller.email,
+                        icon: Icons.mail_outline),
                     const SizedBox(height: 16),
-
                     _buildField(
-                      label: 'Phone Number',
-                      icon: Icons.phone_outlined,
-                      controller: _controller.phoneController,
-                      editable: _isEditing,
-                      keyboardType: TextInputType.phone,
-                    ),
+                        isDark: isDark,
+                        label: 'Phone Number',
+                        icon: Icons.phone_outlined,
+                        controller: _controller.phoneController,
+                        editable: _isEditing,
+                        keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
-
-                    _buildGenderField(),
+                    _buildGenderField(isDark),
                     const SizedBox(height: 16),
-
                     if (_controller.patientCode.isNotEmpty)
-                      _buildPatientCodeInline(),
+                      _buildPatientCodeInline(isDark),
                     if (_controller.patientCode.isNotEmpty)
                       const SizedBox(height: 16),
-
                     _buildField(
-                      label: 'Date of Birth',
-                      icon: Icons.calendar_month_outlined,
-                      controller: _controller.dobController,
-                      editable: _isEditing,
-                      hint: 'DD/MM/YYYY',
-                      keyboardType: TextInputType.datetime,
-                    ),
+                        isDark: isDark,
+                        label: 'Date of Birth',
+                        icon: Icons.calendar_month_outlined,
+                        controller: _controller.dobController,
+                        editable: _isEditing,
+                        hint: 'DD/MM/YYYY',
+                        keyboardType: TextInputType.datetime),
                     const SizedBox(height: 16),
-
                     _buildField(
-                      label: 'Address',
-                      icon: Icons.location_on_outlined,
-                      controller: _controller.addressController,
-                      editable: _isEditing,
-                    ),
+                        isDark: isDark,
+                        label: 'Address',
+                        icon: Icons.location_on_outlined,
+                        controller: _controller.addressController,
+                        editable: _isEditing),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -263,15 +270,16 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // ── Stats Footer ────────────────────────────────────────────────────────────
-  Widget _buildStatsFooter() {
+  Widget _buildStatsFooter(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding:
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black
+                .withOpacity(isDark ? 0.2 : 0.06),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -280,55 +288,70 @@ class _ProfileViewState extends State<ProfileView> {
       child: Row(
         children: [
           _buildStatCard(
+            isDark: isDark,
             value: _controller.statsLoading
                 ? '...'
                 : '${_controller.totalAppointments}',
             label: 'Total',
             color: const Color(0xFF2563EB),
-            bgColor: const Color(0xFFEFF6FF),
+            bgColor: isDark
+                ? const Color(0xFF1E3A5F)
+                : const Color(0xFFEFF6FF),
           ),
           const SizedBox(width: 12),
           _buildStatCard(
+            isDark: isDark,
             value: _controller.statsLoading
                 ? '...'
                 : '${_controller.completedAppointments}',
             label: 'Completed',
             color: const Color(0xFF16A34A),
-            bgColor: const Color(0xFFF0FDF4),
+            bgColor: isDark
+                ? const Color(0xFF064E3B)
+                : const Color(0xFFF0FDF4),
           ),
           const SizedBox(width: 12),
           _buildStatCard(
+            isDark: isDark,
             value: _controller.statsLoading
                 ? '...'
                 : '${_controller.upcomingAppointments}',
             label: 'Upcoming',
             color: const Color(0xFF9333EA),
-            bgColor: const Color(0xFFFAF5FF),
+            bgColor: isDark
+                ? const Color(0xFF3B0764)
+                : const Color(0xFFFAF5FF),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPatientCodeInline() {
+  Widget _buildPatientCodeInline(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Patient Code',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Colors.black54,
+            color: isDark ? Colors.grey[400] : Colors.black54,
           ),
         ),
         const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: isDark
+                ? const Color(0xFF1E3A5F)
+                : const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFBFDBFE)),
+            border: Border.all(
+                color: isDark
+                    ? const Color(0xFF1D4ED8)
+                    : const Color(0xFFBFDBFE)),
           ),
           child: Row(
             children: [
@@ -350,7 +373,7 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildAvatar() {
+  Widget _buildAvatar(bool isDark) {
     Widget avatar;
     if (_controller.imageBase64 != null &&
         _controller.imageBase64!.isNotEmpty) {
@@ -396,16 +419,18 @@ class _ProfileViewState extends State<ProfileView> {
         const SizedBox(height: 12),
         Text(
           _controller.name,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: isDark ? Colors.white : Colors.black87,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           _controller.email,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.grey[400] : Colors.grey),
         ),
       ],
     );
@@ -418,15 +443,15 @@ class _ProfileViewState extends State<ProfileView> {
       child: Text(
         _controller.avatarInitial,
         style: const TextStyle(
-          fontSize: 40,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold),
       ),
     );
   }
 
   Widget _buildStatCard({
+    required bool isDark,
     required String value,
     required String label,
     required Color color,
@@ -441,17 +466,18 @@ class _ProfileViewState extends State<ProfileView> {
         ),
         child: Column(
           children: [
-            Text(
-              value,
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: color),
-            ),
+            Text(value,
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color)),
             const SizedBox(height: 4),
             Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: Colors.black54)),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: isDark
+                        ? Colors.grey[400]
+                        : Colors.black54)),
           ],
         ),
       ),
@@ -459,6 +485,7 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Widget _buildReadOnlyField({
+    required bool isDark,
     required String label,
     required String value,
     required IconData icon,
@@ -467,31 +494,40 @@ class _ProfileViewState extends State<ProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.black54)),
+                color:
+                isDark ? Colors.grey[400] : Colors.black54)),
         const SizedBox(height: 6),
         Container(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: isDark
+                ? const Color(0xFF374151)
+                : const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: Colors.grey),
+              Icon(icon,
+                  size: 18,
+                  color: isDark ? Colors.grey[400] : Colors.grey),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   value.isNotEmpty ? value : '—',
-                  style: const TextStyle(
-                      fontSize: 15, color: Colors.black54),
+                  style: TextStyle(
+                      fontSize: 15,
+                      color: isDark
+                          ? Colors.grey[300]
+                          : Colors.black54),
                 ),
               ),
-              const Icon(Icons.lock_outline,
-                  size: 14, color: Colors.grey),
+              Icon(Icons.lock_outline,
+                  size: 14,
+                  color: isDark ? Colors.grey[600] : Colors.grey),
             ],
           ),
         ),
@@ -500,6 +536,7 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Widget _buildField({
+    required bool isDark,
     required String label,
     required IconData icon,
     required TextEditingController controller,
@@ -511,34 +548,42 @@ class _ProfileViewState extends State<ProfileView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.black54)),
+                color:
+                isDark ? Colors.grey[400] : Colors.black54)),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: editable ? Colors.white : const Color(0xFFF3F4F6),
+            color: editable
+                ? (isDark ? const Color(0xFF374151) : Colors.white)
+                : (isDark
+                ? const Color(0xFF374151)
+                : const Color(0xFFF3F4F6)),
             borderRadius: BorderRadius.circular(12),
             border: editable
-                ? Border.all(color: const Color(0xFF2563EB), width: 1.5)
+                ? Border.all(
+                color: const Color(0xFF2563EB), width: 1.5)
                 : null,
           ),
           child: TextField(
             controller: controller,
             enabled: editable,
             keyboardType: keyboardType,
-            style:
-            const TextStyle(fontSize: 15, color: Colors.black87),
+            style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white : Colors.black87),
             decoration: InputDecoration(
               prefixIcon: Icon(icon,
                   size: 18,
                   color: editable
                       ? const Color(0xFF2563EB)
-                      : Colors.grey),
+                      : (isDark ? Colors.grey[400] : Colors.grey)),
               hintText: hint,
-              hintStyle:
-              const TextStyle(color: Colors.grey, fontSize: 14),
+              hintStyle: TextStyle(
+                  color: isDark ? Colors.grey[500] : Colors.grey,
+                  fontSize: 14),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                   vertical: 14, horizontal: 4),
@@ -549,23 +594,28 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildGenderField() {
+  Widget _buildGenderField(bool isDark) {
     const options = ['male', 'female', 'other'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Gender',
+        Text('Gender',
             style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.black54)),
+                color:
+                isDark ? Colors.grey[400] : Colors.black54)),
         const SizedBox(height: 6),
         Container(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
-            color: _isEditing ? Colors.white : const Color(0xFFF3F4F6),
+            color: _isEditing
+                ? (isDark ? const Color(0xFF374151) : Colors.white)
+                : (isDark
+                ? const Color(0xFF374151)
+                : const Color(0xFFF3F4F6)),
             borderRadius: BorderRadius.circular(12),
             border: _isEditing
                 ? Border.all(
@@ -578,49 +628,60 @@ class _ProfileViewState extends State<ProfileView> {
                   size: 18,
                   color: _isEditing
                       ? const Color(0xFF2563EB)
-                      : Colors.grey),
+                      : (isDark ? Colors.grey[400] : Colors.grey)),
               const SizedBox(width: 10),
               Expanded(
                 child: _isEditing
                     ? DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value:
-                    _controller.selectedGender.isNotEmpty
+                    value: _controller.selectedGender.isNotEmpty
                         ? _controller.selectedGender
                         : null,
-                    hint: const Text('Select gender',
-                        style:
-                        TextStyle(color: Colors.grey)),
+                    hint: Text('Select gender',
+                        style: TextStyle(
+                            color: isDark
+                                ? Colors.grey[400]
+                                : Colors.grey)),
                     isExpanded: true,
+                    dropdownColor: isDark
+                        ? const Color(0xFF1F2937)
+                        : Colors.white,
+                    style: TextStyle(
+                        color: isDark
+                            ? Colors.white
+                            : Colors.black87),
                     items: options
                         .map((g) => DropdownMenuItem(
                       value: g,
                       child: Text(
-                        g[0].toUpperCase() +
-                            g.substring(1),
-                        style: const TextStyle(
-                            fontSize: 15),
-                      ),
+                          g[0].toUpperCase() +
+                              g.substring(1),
+                          style: const TextStyle(
+                              fontSize: 15)),
                     ))
                         .toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        setState(() =>
-                        _controller.selectedGender = val);
+                        setState(() => _controller
+                            .selectedGender = val);
                       }
                     },
                   ),
                 )
                     : Padding(
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 14),
                   child: Text(
                     _controller.gender.isNotEmpty
-                        ? _controller.gender[0].toUpperCase() +
+                        ? _controller.gender[0]
+                        .toUpperCase() +
                         _controller.gender.substring(1)
                         : '—',
-                    style: const TextStyle(
-                        fontSize: 15, color: Colors.black54),
+                    style: TextStyle(
+                        fontSize: 15,
+                        color: isDark
+                            ? Colors.grey[300]
+                            : Colors.black54),
                   ),
                 ),
               ),
@@ -631,56 +692,48 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // ── Bottom Nav ─────────────────────────────────────────────────────────────
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(bool isDark) {
     return BottomNavigationBar(
       currentIndex: 2,
+      backgroundColor:
+      isDark ? const Color(0xFF1F2937) : Colors.white,
+      selectedItemColor: const Color(0xFF2563EB),
+      unselectedItemColor:
+      isDark ? Colors.grey[500] : Colors.grey,
       onTap: (index) {
         switch (index) {
           case 0:
             Navigator.pushReplacementNamed(context, AppRoutes.home);
             break;
           case 1:
-            Navigator.pushReplacementNamed(context, AppRoutes.booking);
+            Navigator.pushReplacementNamed(
+                context, AppRoutes.booking);
             break;
           case 2:
             break;
-          case 3: // 👈 navigate to settings with session data
-            Navigator.pushNamed(
-              context,
-              AppRoutes.settings,
-              arguments: {
-                'name': AppSession.patientName ?? 'User',
-                'email': AppSession.patientEmail ?? '',
-              },
-            );
+          case 3:
+            Navigator.pushNamed(context, AppRoutes.settings);
             break;
         }
       },
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF2563EB),
-      unselectedItemColor: Colors.grey,
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month_outlined),
-          activeIcon: Icon(Icons.calendar_month),
-          label: 'Book',
-        ),
+            icon: Icon(Icons.calendar_month_outlined),
+            activeIcon: Icon(Icons.calendar_month),
+            label: 'Book'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profile',
-        ),
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.settings_outlined),
-          activeIcon: Icon(Icons.settings),
-          label: 'Settings',
-        ),
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Settings'),
       ],
     );
   }

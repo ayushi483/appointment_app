@@ -8,11 +8,11 @@ class SpecialityByDoctorView extends StatefulWidget {
   const SpecialityByDoctorView({super.key});
 
   @override
-  State<SpecialityByDoctorView> createState() => _SpecialityByDoctorViewState();
+  State<SpecialityByDoctorView> createState() =>
+      _SpecialityByDoctorViewState();
 }
 
 class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
-  // ✅ Use AppointmentController instead of DoctorController
   final _appointmentController = AppointmentController();
 
   List<DoctorSearchModel> _doctors = [];
@@ -27,8 +27,6 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      debugPrint('>>> ARGS RECEIVED: $args');
-
       if (args is Map<String, dynamic>) {
         setState(() {
           _specialityId = args['speciality_id'] as int?;
@@ -59,27 +57,24 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
       return;
     }
 
-    // ✅ Call the working getDoctorsBySpeciality from AppointmentController
-    final doctors =
-    await _appointmentController.getDoctorsBySpeciality(_specialityId!);
+    final doctors = await _appointmentController
+        .getDoctorsBySpeciality(_specialityId!);
 
     if (!mounted) return;
 
     setState(() {
       _loading = false;
-      if (doctors.isNotEmpty) {
-        _doctors = doctors;
-      } else {
-        _doctors = [];
-        // Not a hard error — just empty results
-      }
+      _doctors = doctors;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
@@ -95,15 +90,15 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
           ),
         ],
       ),
-      body: _buildBody(),
+      body: _buildBody(isDark),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(bool isDark) {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF2563EB)),
-      );
+          child:
+          CircularProgressIndicator(color: Color(0xFF2563EB)));
     }
 
     if (_error != null) {
@@ -111,9 +106,13 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const Icon(Icons.error_outline,
+                color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Colors.grey)),
+            Text(_error!,
+                style: TextStyle(
+                    color:
+                    isDark ? Colors.grey[400] : Colors.grey)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _load,
@@ -134,13 +133,18 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_search,
-                size: 64, color: Color(0xFFBFDBFE)),
+            Icon(Icons.person_search,
+                size: 64,
+                color: isDark
+                    ? const Color(0xFF1E3A5F)
+                    : const Color(0xFFBFDBFE)),
             const SizedBox(height: 16),
             Text(
               'No doctors available\nfor $_specialityName',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, fontSize: 15),
+              style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey,
+                  fontSize: 15),
             ),
           ],
         ),
@@ -159,20 +163,22 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 '${_doctors.length} doctor${_doctors.length == 1 ? '' : 's'} found',
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey,
+                    fontSize: 13),
               ),
             );
           }
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _buildDoctorCard(_doctors[index - 1]),
+            child: _buildDoctorCard(isDark, _doctors[index - 1]),
           );
         },
       ),
     );
   }
 
-  Widget _buildDoctorCard(DoctorSearchModel doc) {
+  Widget _buildDoctorCard(bool isDark, DoctorSearchModel doc) {
     final isAvailable = doc.available;
     final availableColor =
     isAvailable ? const Color(0xFF16A34A) : const Color(0xFFD97706);
@@ -186,13 +192,13 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-          ),
+              color:
+              Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 6),
         ],
       ),
       child: Column(
@@ -200,7 +206,6 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Doctor image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: imageBytes != null
@@ -209,21 +214,26 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
                     : Container(
                   width: 72,
                   height: 72,
-                  color: const Color(0xFFE0F2FE),
+                  color: isDark
+                      ? const Color(0xFF1E3A5F)
+                      : const Color(0xFFE0F2FE),
                   child: const Icon(Icons.person,
                       size: 40, color: Color(0xFF2563EB)),
                 ),
               ),
               const SizedBox(width: 12),
-              // Doctor info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       doc.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: isDark
+                              ? Colors.white
+                              : Colors.black87),
                     ),
                     if ((doc.speciality ?? '').isNotEmpty)
                       Padding(
@@ -231,29 +241,45 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
                         child: Text(
                           doc.speciality!,
                           style: const TextStyle(
-                              color: Color(0xFF2563EB), fontSize: 13),
+                              color: Color(0xFF2563EB),
+                              fontSize: 13),
                         ),
                       ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.payments_outlined,
-                            size: 13, color: Colors.grey),
+                        Icon(Icons.payments_outlined,
+                            size: 13,
+                            color: isDark
+                                ? Colors.grey[400]
+                                : Colors.grey),
                         const SizedBox(width: 3),
                         Text(
                           '₹${doc.fees.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey),
                         ),
-                        const Text(' • ',
-                            style: TextStyle(color: Colors.grey)),
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 13, color: Colors.grey),
+                        Text(' • ',
+                            style: TextStyle(
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey)),
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13,
+                            color: isDark
+                                ? Colors.grey[400]
+                                : Colors.grey),
                         const SizedBox(width: 3),
                         Text(
                           '${doc.totalAppointment} appts',
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey),
                         ),
                       ],
                     ),
@@ -262,13 +288,19 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Row(
                           children: [
-                            const Icon(Icons.phone_outlined,
-                                size: 13, color: Colors.grey),
+                            Icon(Icons.phone_outlined,
+                                size: 13,
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey),
                             const SizedBox(width: 3),
                             Text(
                               doc.phone!,
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey),
                             ),
                           ],
                         ),
@@ -282,12 +314,11 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Availability badge
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: availableColor.withOpacity(0.1),
+                  color: availableColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -298,7 +329,6 @@ class _SpecialityByDoctorViewState extends State<SpecialityByDoctorView> {
                       fontWeight: FontWeight.w500),
                 ),
               ),
-              // Book Now button
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(
                   context,

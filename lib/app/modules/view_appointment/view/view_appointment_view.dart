@@ -88,15 +88,18 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
     if (!mounted) return;
     if (result['success'] == true) {
       setState(() {
-        _noShow = List<Map<String, dynamic>>.from(result['appointments']);
+        _noShow =
+        List<Map<String, dynamic>>.from(result['appointments']);
         _isLoadingNoShow = false;
       });
     } else {
-      final fallback = await _controller.fetchAppointments('no_show');
+      final fallback =
+      await _controller.fetchAppointments('no_show');
       if (!mounted) return;
       setState(() {
         _noShow = fallback['success'] == true
-            ? List<Map<String, dynamic>>.from(fallback['appointments'])
+            ? List<Map<String, dynamic>>.from(
+            fallback['appointments'])
             : [];
         _isLoadingNoShow = false;
       });
@@ -110,7 +113,8 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         title: const Text('Cancel Appointment'),
         content: const Text(
             'Are you sure you want to cancel this appointment? This action cannot be undone.'),
@@ -119,9 +123,11 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Keep It')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+            child: const Text('Cancel',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -151,8 +157,11 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
     if (dt == null || dt.isEmpty) return '';
     try {
       final parsed = DateTime.parse(dt);
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       return '${days[parsed.weekday - 1]}, ${months[parsed.month - 1]} ${parsed.day}';
     } catch (_) {
       return dt;
@@ -178,25 +187,39 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor:
+      isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1,
         type: BottomNavigationBarType.fixed,
+        backgroundColor:
+        isDark ? const Color(0xFF1F2937) : Colors.white,
         selectedItemColor: const Color(0xFF2563EB),
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor:
+        isDark ? Colors.grey[500] : Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Book'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month), label: 'Book'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined), label: 'Settings'),
         ],
         onTap: (i) {
           if (i == 0) {
-            Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (r) => false,
-                arguments: {'name': AppSession.patientName ?? 'User'});
+            Navigator.pushNamedAndRemoveUntil(
+                context, AppRoutes.home, (r) => false);
           }
           if (i == 1) Navigator.pushNamed(context, AppRoutes.booking);
+          if (i == 2)
+            Navigator.pushNamed(context, AppRoutes.profile);
+          if (i == 3)
+            Navigator.pushNamed(context, AppRoutes.settings);
         },
       ),
       body: NestedScrollView(
@@ -204,38 +227,52 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
           SliverAppBar(
             pinned: true,
             floating: false,
-            backgroundColor: Colors.white,
+            backgroundColor:
+            isDark ? const Color(0xFF1F2937) : Colors.white,
             elevation: 0,
+            iconTheme: IconThemeData(
+                color: isDark ? Colors.white : Colors.black),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('My Appointments',
+                Text('My Appointments',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black, fontSize: 18)),
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 18)),
                 if (AppSession.patientName != null)
                   Text(AppSession.patientName!,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.grey, fontWeight: FontWeight.normal)),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? Colors.grey[400]
+                              : Colors.grey,
+                          fontWeight: FontWeight.normal)),
               ],
             ),
-            iconTheme: const IconThemeData(color: Colors.black),
             actions: [
               IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.black),
+                  icon: Icon(Icons.refresh,
+                      color: isDark ? Colors.white : Colors.black),
                   onPressed: _loadAll),
             ],
             bottom: TabBar(
               controller: _tabController,
               labelColor: const Color(0xFF2563EB),
-              unselectedLabelColor: Colors.grey,
+              unselectedLabelColor:
+              isDark ? Colors.grey[400] : Colors.grey,
               indicatorColor: const Color(0xFF2563EB),
               isScrollable: true,
               tabAlignment: TabAlignment.start,
               tabs: [
-                Tab(text: _tabLabel('Upcoming', _isLoadingUpcoming, _upcoming.length)),
-                Tab(text: _tabLabel('Completed', _isLoadingCompleted, _completed.length)),
-                Tab(text: _tabLabel('Cancelled', _isLoadingCancelled, _cancelled.length)),
-                Tab(text: _tabLabel('No Show', _isLoadingNoShow, _noShow.length)),
+                Tab(text: _tabLabel('Upcoming', _isLoadingUpcoming,
+                    _upcoming.length)),
+                Tab(text: _tabLabel('Completed', _isLoadingCompleted,
+                    _completed.length)),
+                Tab(text: _tabLabel('Cancelled', _isLoadingCancelled,
+                    _cancelled.length)),
+                Tab(text: _tabLabel(
+                    'No Show', _isLoadingNoShow, _noShow.length)),
               ],
             ),
           ),
@@ -243,13 +280,16 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildScrollableList(_upcoming,
-                isLoading: _isLoadingUpcoming, tabType: _TabType.upcoming),
-            _buildScrollableList(_completed,
-                isLoading: _isLoadingCompleted, tabType: _TabType.completed),
-            _buildScrollableList(_cancelled,
-                isLoading: _isLoadingCancelled, tabType: _TabType.cancelled),
-            _buildScrollableList(_noShow,
+            _buildScrollableList(isDark, _upcoming,
+                isLoading: _isLoadingUpcoming,
+                tabType: _TabType.upcoming),
+            _buildScrollableList(isDark, _completed,
+                isLoading: _isLoadingCompleted,
+                tabType: _TabType.completed),
+            _buildScrollableList(isDark, _cancelled,
+                isLoading: _isLoadingCancelled,
+                tabType: _TabType.cancelled),
+            _buildScrollableList(isDark, _noShow,
                 isLoading: _isLoadingNoShow, tabType: _TabType.noShow),
           ],
         ),
@@ -257,10 +297,13 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
     );
   }
 
-  Widget _buildScrollableList(List<Map<String, dynamic>> appointments,
+  Widget _buildScrollableList(
+      bool isDark, List<Map<String, dynamic>> appointments,
       {bool isLoading = false, required _TabType tabType}) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)));
+      return const Center(
+          child:
+          CircularProgressIndicator(color: Color(0xFF2563EB)));
     }
 
     if (appointments.isEmpty) {
@@ -278,16 +321,20 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                     ? Icons.cancel_outlined
                     : Icons.calendar_today_outlined,
                 size: 60,
-                color: Colors.grey,
+                color: isDark ? Colors.grey[600] : Colors.grey,
               ),
               const SizedBox(height: 12),
               Text(_emptyMessage(tabType),
-                  style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                  style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey,
+                      fontSize: 16)),
               if (tabType == _TabType.upcoming) ...[
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.booking),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.booking),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB)),
                   child: const Text('Book Appointment',
                       style: TextStyle(color: Colors.white)),
                 ),
@@ -303,21 +350,27 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: appointments.length,
-      itemBuilder: (context, index) =>
-          _buildAppointmentCard(appointments[index], tabType: tabType),
+      itemBuilder: (context, index) => _buildAppointmentCard(
+          isDark, appointments[index],
+          tabType: tabType),
     );
   }
 
   String _emptyMessage(_TabType t) {
     switch (t) {
-      case _TabType.upcoming:   return 'No upcoming appointments';
-      case _TabType.completed:  return 'No completed appointments';
-      case _TabType.cancelled:  return 'No cancelled appointments';
-      case _TabType.noShow:     return 'No no-show appointments';
+      case _TabType.upcoming:
+        return 'No upcoming appointments';
+      case _TabType.completed:
+        return 'No completed appointments';
+      case _TabType.cancelled:
+        return 'No cancelled appointments';
+      case _TabType.noShow:
+        return 'No no-show appointments';
     }
   }
 
-  Widget _buildAppointmentCard(Map<String, dynamic> appt,
+  Widget _buildAppointmentCard(
+      bool isDark, Map<String, dynamic> appt,
       {required _TabType tabType}) {
     final dateStr = _formatDatetime(appt['appointment_datetime']);
     final timeStr = _formatTime(appt['appointment_datetime']);
@@ -346,29 +399,38 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
 
     String statusLabel = status.toUpperCase();
     if (status == 'no_show') statusLabel = 'NO SHOW';
-    if (status == 'cancel' || status == 'cancelled') statusLabel = 'CANCELLED';
+    if (status == 'cancel' || status == 'cancelled')
+      statusLabel = 'CANCELLED';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black
+                  .withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 8)
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Doctor row ───────────────────────────────────────────────
+          // Doctor row
           Row(
             children: [
               Container(
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
+                    color: isDark
+                        ? const Color(0xFF1E3A5F)
+                        : const Color(0xFFE0F2FE),
                     borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.person, size: 32, color: Color(0xFF2563EB)),
+                child: const Icon(Icons.person,
+                    size: 32, color: Color(0xFF2563EB)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -376,19 +438,26 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(appt['doctor_name'] ?? '',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
-                    if ((appt['doctor_speciality'] ?? '').isNotEmpty)
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: isDark
+                                ? Colors.white
+                                : Colors.black87)),
+                    if ((appt['doctor_speciality'] ?? '')
+                        .isNotEmpty)
                       Text(appt['doctor_speciality'],
                           style: const TextStyle(
-                              color: Color(0xFF2563EB), fontSize: 13)),
+                              color: Color(0xFF2563EB),
+                              fontSize: 13)),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20)),
                 child: Text(statusLabel,
                     style: TextStyle(
@@ -400,18 +469,20 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
           ),
           const SizedBox(height: 12),
 
-          // ── Info rows ─────────────────────────────────────────────────
-          _infoRow(Icons.calendar_today_outlined, dateStr),
+          _infoRow(isDark, Icons.calendar_today_outlined, dateStr),
           const SizedBox(height: 4),
-          _infoRow(Icons.access_time_outlined, timeStr),
+          _infoRow(isDark, Icons.access_time_outlined, timeStr),
 
-          // ── Appointment Code pill badge ────────────────────────────────
+          // Appointment code
           if (code.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: isDark
+                    ? const Color(0xFF1E3A5F)
+                    : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -420,28 +491,30 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                   const Icon(Icons.confirmation_number_outlined,
                       size: 13, color: Color(0xFF2563EB)),
                   const SizedBox(width: 4),
-                  Text(
-                    code,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF2563EB),
-                        fontWeight: FontWeight.w600),
-                  ),
+                  Text(code,
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2563EB),
+                          fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
           ],
 
-          // ── No-show notice ────────────────────────────────────────────
+          // No-show notice
           if (tabType == _TabType.noShow) ...[
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: isDark
+                    ? const Color(0xFF422006)
+                    : const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFF59E0B), width: 1),
+                border: Border.all(
+                    color: const Color(0xFFF59E0B), width: 1),
               ),
               child: Row(
                 children: const [
@@ -451,7 +524,8 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                   Expanded(
                     child: Text(
                       'You missed this appointment. Please contact the clinic to reschedule.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                      style: TextStyle(
+                          fontSize: 12, color: Color(0xFF92400E)),
                     ),
                   ),
                 ],
@@ -459,54 +533,68 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
             ),
           ],
 
-          // ── Cancelled notice ──────────────────────────────────────────
+          // Cancelled notice
           if (tabType == _TabType.cancelled) ...[
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEE2E2),
+                color: isDark
+                    ? const Color(0xFF3B0A0A)
+                    : const Color(0xFFFEE2E2),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.red.shade200, width: 1),
               ),
               child: Row(
                 children: const [
-                  Icon(Icons.cancel_outlined, color: Colors.red, size: 16),
+                  Icon(Icons.cancel_outlined,
+                      color: Colors.red, size: 16),
                   SizedBox(width: 6),
                   Expanded(
                     child: Text('This appointment has been cancelled.',
-                        style: TextStyle(fontSize: 12, color: Colors.red)),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.red)),
                   ),
                 ],
               ),
             ),
           ],
 
-          // ── Notes ─────────────────────────────────────────────────────
+          // Notes
           if ((appt['notes'] ?? '').isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: isDark
+                      ? const Color(0xFF374151)
+                      : const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(10)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Notes',
-                      style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text('Notes',
+                      style: TextStyle(
+                          color:
+                          isDark ? Colors.grey[400] : Colors.grey,
+                          fontSize: 12)),
                   const SizedBox(height: 2),
                   Text(appt['notes'],
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w500, fontSize: 13)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          color: isDark
+                              ? Colors.white
+                              : Colors.black87)),
                 ],
               ),
             ),
           ],
 
-          // ── Action buttons — upcoming only ────────────────────────────
+          // Action buttons — upcoming only
           if (tabType == _TabType.upcoming) ...[
             const SizedBox(height: 10),
             Row(
@@ -515,12 +603,19 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                   child: OutlinedButton(
                     onPressed: () {},
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFD1D5DB)),
+                      side: BorderSide(
+                          color: isDark
+                              ? const Color(0xFF4B5563)
+                              : const Color(0xFFD1D5DB)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Reschedule',
-                        style: TextStyle(color: Colors.black87, fontSize: 13)),
+                    child: Text('Reschedule',
+                        style: TextStyle(
+                            color: isDark
+                                ? Colors.grey[300]
+                                : Colors.black87,
+                            fontSize: 13)),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -533,15 +628,17 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                           borderRadius: BorderRadius.circular(10)),
                     ),
                     child: const Text('Cancel',
-                        style: TextStyle(color: Colors.red, fontSize: 13)),
+                        style: TextStyle(
+                            color: Colors.red, fontSize: 13)),
                   ),
                 ),
               ],
             ),
           ],
 
-          // ── Re-book — cancelled & no-show ─────────────────────────────
-          if (tabType == _TabType.cancelled || tabType == _TabType.noShow) ...[
+          // Re-book — cancelled & no-show
+          if (tabType == _TabType.cancelled ||
+              tabType == _TabType.noShow) ...[
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
@@ -549,13 +646,15 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
                 icon: const Icon(Icons.add_circle_outline,
                     size: 16, color: Colors.white),
                 label: const Text('Book Again',
-                    style: TextStyle(color: Colors.white, fontSize: 13)),
+                    style: TextStyle(
+                        color: Colors.white, fontSize: 13)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.booking),
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.booking),
               ),
             ),
           ],
@@ -564,12 +663,17 @@ class _ViewAppointmentViewState extends State<ViewAppointmentView>
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
+  Widget _infoRow(bool isDark, IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.grey),
+        Icon(icon,
+            size: 14,
+            color: isDark ? Colors.grey[400] : Colors.grey),
         const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        Text(text,
+            style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.grey[400] : Colors.grey)),
       ],
     );
   }
