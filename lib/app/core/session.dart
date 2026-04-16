@@ -5,6 +5,7 @@ class AppSession {
   static String? patientEmail;
   static String? patientPhone;
   static String? patientCode;
+  static String? sessionToken;
 
   /// Call this on app startup to restore session from SharedPreferences data.
   static void restore(Map<String, dynamic> saved) {
@@ -15,6 +16,7 @@ class AppSession {
       patientEmail = saved['patientEmail'];
       patientPhone = saved['patientPhone'];
       patientCode  = saved['patientCode'];
+      sessionToken = saved['sessionToken'];
     }
   }
 
@@ -25,5 +27,6 @@ class AppSession {
     patientEmail = null;
     patientPhone = null;
     patientCode  = null;
+    sessionToken = null;
   }
 }

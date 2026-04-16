@@ -66,7 +66,6 @@ class _AppointmentViewState extends State<AppointmentView> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      // ── DARK MODE: scaffold background
       backgroundColor:
       isDark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
       body: SafeArea(
@@ -77,7 +76,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Top blue header (always blue, looks fine in dark too)
+                    // ── Top blue header
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
@@ -92,7 +91,8 @@ class _AppointmentViewState extends State<AppointmentView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 _displayName,
@@ -106,7 +106,6 @@ class _AppointmentViewState extends State<AppointmentView> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // ── Search box: dark-aware
                           Container(
                             decoration: BoxDecoration(
                               color: isDark
@@ -171,7 +170,6 @@ class _AppointmentViewState extends State<AppointmentView> {
           ],
         ),
       ),
-      // ── DARK MODE: bottom nav
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         backgroundColor:
@@ -228,7 +226,6 @@ class _AppointmentViewState extends State<AppointmentView> {
               padding: const EdgeInsets.symmetric(
                   vertical: 20, horizontal: 10),
               decoration: BoxDecoration(
-                // ── DARK MODE: quick-actions card
                 color: isDark ? const Color(0xFF1F2937) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -263,7 +260,6 @@ class _AppointmentViewState extends State<AppointmentView> {
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      // ── DARK MODE: section title
                       color: isDark ? Colors.white : Colors.black87)),
               GestureDetector(
                 onTap: () => Navigator.pushNamed(
@@ -976,7 +972,6 @@ class _SpecialityItem extends StatelessWidget {
       margin: const EdgeInsets.only(right: 12),
       width: 84,
       decoration: BoxDecoration(
-        // ── DARK MODE: speciality chip
         color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
