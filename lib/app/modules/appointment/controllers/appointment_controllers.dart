@@ -144,7 +144,7 @@ class AppointmentModel {
 // ─── Controller ───────────────────────────────────────────────────────────────
 
 class AppointmentController extends ChangeNotifier {
-  static const String _baseUrl = 'http://10.0.2.2:8093';
+  static const String _baseUrl = 'http://192.168.1.43:8093';
 
   List<SpecialityModel> specialities = [];
   bool loadingSpecialities = false;

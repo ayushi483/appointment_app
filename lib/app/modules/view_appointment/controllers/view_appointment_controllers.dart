@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:clinic_management/app/core/session.dart';
 
 class ViewAppointmentController {
-  static const String _baseUrl = 'http://10.0.2.2:8093';
+  static const String _baseUrl = 'http://192.168.1.43:8093';
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',

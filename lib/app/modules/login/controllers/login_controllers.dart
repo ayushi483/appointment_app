@@ -12,7 +12,7 @@ class LoginController {
   bool obscurePassword  = true;
   bool rememberMe       = false;
 
-  static const String baseUrl = 'http://10.0.2.2:8093';
+  static const String baseUrl = 'http://192.168.1.43:8093';
 
   String? validate() {
     final input    = emailController.text.trim();

@@ -1,7 +1,7 @@
 import 'package:clinic_management/app/core/session.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://10.0.2.2:8093'; // ✅ your Odoo server
+  static const String baseUrl = 'http://192.168.1.43:8093'; // ✅ your Odoo server
 
   static Future<Map<String, String>> getHeaders() async {
     return {

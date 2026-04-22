@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:clinic_management/app/core/session.dart';
 import 'package:clinic_management/app/core/theme_notifier.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-const String _kBaseUrl = 'http://10.0.2.2:8093';
+const String _kBaseUrl = 'http://192.168.1.43:8093';
 
 enum _Role { user, assistant }
 
@@ -27,8 +25,6 @@ String _cleanMarkdown(String text) {
 }
 
 // ─── Main overlay widget ──────────────────────────────────────
-// NOTE: This widget is intentionally NOT a Positioned widget.
-// Positioning is handled entirely by main.dart's global builder.
 class ClinicChatbotOverlay extends StatefulWidget {
   const ClinicChatbotOverlay({super.key});
 
@@ -120,7 +116,6 @@ class _ChatFab extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Subtle inner ring for depth
             Container(
               width: 50,
               height: 50,
@@ -138,13 +133,9 @@ class _ChatFab extends StatelessWidget {
                   ScaleTransition(scale: anim, child: child),
               child: open
                   ? const Icon(Icons.close_rounded,
-                  key: ValueKey('close'),
-                  color: Colors.white,
-                  size: 24)
+                  key: ValueKey('close'), color: Colors.white, size: 24)
                   : const Icon(Icons.chat_bubble_rounded,
-                  key: ValueKey('chat'),
-                  color: Colors.white,
-                  size: 24),
+                  key: ValueKey('chat'), color: Colors.white, size: 24),
             ),
           ],
         ),
@@ -179,189 +170,17 @@ class _ChatPanelState extends State<_ChatPanel> {
   final ScrollController _scroll = ScrollController();
   bool _loading = false;
 
-  // ── Speech-to-text ─────────────────────────────────────────
-  late stt.SpeechToText _speech;
-  bool _isListening = false;
-
-  // Three-state: null = not yet checked, true = available, false = unavailable
-  bool? _speechAvailable;
-
   @override
   void initState() {
     super.initState();
     _messages = [_ChatMessage(_Role.assistant, _welcome)];
-    _speech = stt.SpeechToText();
-    // Don't block UI — init in background
-    _initSpeech();
-  }
-
-  // ── Speech init ─────────────────────────────────────────────
-  Future<void> _initSpeech() async {
-    try {
-      // Check and request permission
-      var micStatus = await Permission.microphone.status;
-      debugPrint('Microphone status: $micStatus');
-
-      if (!micStatus.isGranted) {
-        micStatus = await Permission.microphone.request();
-        debugPrint('Microphone request result: $micStatus');
-      }
-
-      if (!micStatus.isGranted) {
-        if (mounted) setState(() => _speechAvailable = false);
-        return;
-      }
-
-      // Initialize with proper error handling
-      final available = await _speech.initialize(
-        onError: (e) {
-          debugPrint('STT error: ${e.errorMsg}');
-          if (mounted) {
-            setState(() {
-              _isListening = false;
-              _speechAvailable = false;
-            });
-          }
-        },
-        onStatus: (s) {
-          debugPrint('STT status: $s');
-          if ((s == 'done' || s == 'notListening') && mounted) {
-            setState(() => _isListening = false);
-          }
-        },
-        debugLogging: true,
-      );
-
-      if (mounted) setState(() => _speechAvailable = available);
-      debugPrint('STT init result: $available');
-
-      // If initialization failed, try once more with default options
-      if (!available) {
-        debugPrint('Retrying STT initialization...');
-        final retryAvailable = await _speech.initialize();
-        if (mounted) setState(() => _speechAvailable = retryAvailable);
-        debugPrint('STT retry result: $retryAvailable');
-      }
-    } catch (e) {
-      debugPrint('STT init exception: $e');
-      if (mounted) setState(() => _speechAvailable = false);
-    }
   }
 
   @override
   void dispose() {
     _input.dispose();
     _scroll.dispose();
-    if (_isListening) _speech.stop();
     super.dispose();
-  }
-
-  // ── Toggle mic ──────────────────────────────────────────────
-  Future<void> _toggleListening() async {
-    // If currently listening, stop
-    if (_isListening) {
-      await _speech.stop();
-      if (mounted) setState(() => _isListening = false);
-      return;
-    }
-
-    // Re-check permission before listening
-    final micStatus = await Permission.microphone.status;
-    if (!micStatus.isGranted) {
-      final result = await Permission.microphone.request();
-      if (!result.isGranted) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              '🎙 Microphone permission required.\n'
-                  'Please grant permission in Settings.',
-            ),
-            backgroundColor: const Color(0xFF1D4ED8),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Settings',
-              textColor: Colors.white,
-              onPressed: openAppSettings,
-            ),
-          ),
-        );
-        return;
-      }
-    }
-
-    // If init hasn't finished yet, wait for it
-    if (_speechAvailable == null) {
-      await _initSpeech();
-    }
-
-    // If still not available, try to reinitialize
-    if (_speechAvailable == false) {
-      debugPrint('Attempting to reinitialize speech...');
-      await _initSpeech();
-    }
-
-    // If init confirmed unavailable, show a helpful message
-    if (_speechAvailable != true) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            '🎙 Speech recognition not available.\n'
-                'This may happen on emulators without Google Services.',
-          ),
-          backgroundColor: const Color(0xFF1D4ED8),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-      return;
-    }
-
-    // Start listening
-    if (mounted) setState(() => _isListening = true);
-
-    try {
-      await _speech.listen(
-        onResult: (result) {
-          if (!mounted) return;
-          setState(() {
-            _input.text = result.recognizedWords;
-            _input.selection = TextSelection.fromPosition(
-              TextPosition(offset: _input.text.length),
-            );
-          });
-          if (result.finalResult && result.recognizedWords.isNotEmpty) {
-            _speech.stop();
-            if (mounted) setState(() => _isListening = false);
-            _send();
-          }
-        },
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 3),
-        cancelOnError: false,
-        partialResults: true,
-      );
-    } catch (e) {
-      debugPrint('STT listen error: $e');
-      if (mounted) setState(() => _isListening = false);
-
-      // Show error but don't mark as permanently unavailable
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not start listening: ${e.toString()}'),
-          backgroundColor: Colors.red.shade400,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
   }
 
   void _scrollToBottom() {
@@ -376,7 +195,7 @@ class _ChatPanelState extends State<_ChatPanel> {
     });
   }
 
-  // ── Dark / light mode local commands ─────────────────────
+  // ── Dark / light mode local commands ──────────────────────
   bool _handleLocalCommand(String text) {
     final lower = text.toLowerCase().trim();
     if (lower.contains('dark mode') ||
@@ -403,8 +222,7 @@ class _ChatPanelState extends State<_ChatPanel> {
         _messages.add(_ChatMessage(_Role.user, text));
         _messages.add(_ChatMessage(_Role.assistant, '☀️ Light mode enabled!'));
         _history.add({'role': 'user', 'content': text});
-        _history
-            .add({'role': 'assistant', 'content': '☀️ Light mode enabled!'});
+        _history.add({'role': 'assistant', 'content': '☀️ Light mode enabled!'});
       });
       _input.clear();
       _scrollToBottom();
@@ -487,27 +305,42 @@ class _ChatPanelState extends State<_ChatPanel> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 0,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: SizedBox(
         width: 340,
         height: 520,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFBFDBFE)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF2563EB).withOpacity(0.15),
-              blurRadius: 40,
-              offset: const Offset(0, 8),
+        child: Overlay(
+          initialEntries: [
+            OverlayEntry(
+              maintainState: true,
+              builder: (_) => Container(
+                width: 340,
+                height: 520,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withOpacity(0.15),
+                      blurRadius: 40,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      Expanded(child: _buildMessages()),
+                      _buildInputBar(),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(child: _buildMessages()),
-            _buildInputBar(),
           ],
         ),
       ),
@@ -567,8 +400,7 @@ class _ChatPanelState extends State<_ChatPanel> {
                           ? 'Hi, ${AppSession.patientName}'
                           : 'Always here to help',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
-                          fontSize: 11),
+                          color: Colors.white.withOpacity(0.85), fontSize: 11),
                     ),
                   ],
                 ),
@@ -593,9 +425,7 @@ class _ChatPanelState extends State<_ChatPanel> {
           color: Colors.white.withOpacity(0.15),
           shape: BoxShape.circle,
         ),
-        child: Center(
-          child: Icon(icon, color: Colors.white, size: 16),
-        ),
+        child: Center(child: Icon(icon, color: Colors.white, size: 16)),
       ),
     );
   }
@@ -752,27 +582,8 @@ class _ChatPanelState extends State<_ChatPanel> {
     );
   }
 
-  // ── Input bar ─────────────────────────────────────────────
+  // ── Input bar (mic removed) ───────────────────────────────
   Widget _buildInputBar() {
-    // Mic icon state:
-    // - null  (not checked yet) → blue mic outline
-    // - true  (available)       → blue mic, red when listening
-    // - false (unavailable)     → grey mic with slash
-    final micAvailable = _speechAvailable != false;
-    final micColor = _isListening
-        ? Colors.white
-        : micAvailable
-        ? const Color(0xFF2563EB)
-        : Colors.grey.shade400;
-    final micBg = _isListening
-        ? const Color(0xFFEF4444)
-        : const Color(0xFFEFF6FF);
-    final micBorder = _isListening
-        ? const Color(0xFFEF4444)
-        : micAvailable
-        ? const Color(0xFFDBEAFE)
-        : const Color(0xFFE5E7EB);
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: const BoxDecoration(
@@ -782,47 +593,16 @@ class _ChatPanelState extends State<_ChatPanel> {
       ),
       child: Row(
         children: [
-          // ── Mic button ──────────────────────────────────
-          GestureDetector(
-            onTap: _toggleListening,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 36,
-              height: 36,
-              margin: const EdgeInsets.only(right: 6),
-              decoration: BoxDecoration(
-                color: micBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: micBorder),
-              ),
-              child: Center(
-                child: Icon(
-                  _isListening
-                      ? Icons.mic
-                      : micAvailable
-                      ? Icons.mic_none
-                      : Icons.mic_off,
-                  color: micColor,
-                  size: 18,
-                ),
-              ),
-            ),
-          ),
           Expanded(
             child: TextField(
               controller: _input,
               onSubmitted: (_) => _send(),
-              style: const TextStyle(
-                  fontSize: 13, color: Color(0xFF1E3A5F)),
+              style:
+              const TextStyle(fontSize: 13, color: Color(0xFF1E3A5F)),
               decoration: InputDecoration(
-                hintText: _isListening
-                    ? '🎙 Listening...'
-                    : 'Type your request...',
-                hintStyle: TextStyle(
-                    color: _isListening
-                        ? const Color(0xFFEF4444)
-                        : const Color(0xFF93C5FD),
-                    fontSize: 13),
+                hintText: 'Type your request...',
+                hintStyle: const TextStyle(
+                    color: Color(0xFF93C5FD), fontSize: 13),
                 filled: true,
                 fillColor: const Color(0xFFEFF6FF),
                 border: OutlineInputBorder(
@@ -868,8 +648,8 @@ class _ChatPanelState extends State<_ChatPanel> {
                 ],
               ),
               child: const Center(
-                child:
-                Icon(Icons.send_rounded, color: Colors.white, size: 16),
+                child: Icon(Icons.send_rounded,
+                    color: Colors.white, size: 16),
               ),
             ),
           ),
