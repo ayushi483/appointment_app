@@ -44,7 +44,11 @@ class LoginController {
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/v19/patient/login'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          if (AppSession.apiKey != null)
+            'Authorization': 'Bearer ${AppSession.apiKey!}',
+        },
         body: jsonEncode(body),
       );
 

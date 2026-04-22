@@ -254,8 +254,9 @@ class _ChatPanelState extends State<_ChatPanel> {
         uri,
         headers: {
           'Content-Type': 'application/json',
-          if (AppSession.sessionToken != null)
-            'X-Session-Token': AppSession.sessionToken!,
+          // ✅ FIXED: use apiKey with Bearer auth (Odoo 19 bearer auth)
+          if (AppSession.apiKey != null)
+            'Authorization': 'Bearer ${AppSession.apiKey!}',
         },
         body: jsonEncode({
           'message': text,
@@ -582,7 +583,7 @@ class _ChatPanelState extends State<_ChatPanel> {
     );
   }
 
-  // ── Input bar (mic removed) ───────────────────────────────
+  // ── Input bar ─────────────────────────────────────────────
   Widget _buildInputBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
